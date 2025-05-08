@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { CalendarIcon, X } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -57,7 +57,7 @@ const formSchema = z.object({
   amount: z.coerce.number().positive({ message: "Amount must be positive" }),
   billingCycle: z.enum(["monthly", "yearly"]),
   nextBillingDate: z.date({ required_error: "A date is required" }),
-  category: z.string().optional(),
+  category: z.string().min(1, { message: "Category is required" }),
   notes: z.string().optional(),
 });
 
@@ -74,6 +74,34 @@ const CATEGORIES = [
   'Other'
 ];
 
+// Map of known brands to their logo filenames
+const BRAND_LOGOS: Record<string, string> = {
+  'netflix': 'netflix.png',
+  'spotify': 'spotify.png',
+  'adobe': 'adobe.png',
+  'notion': 'notion.png',
+};
+
+const BRAND_LIST = [
+  { name: 'Netflix', logo: 'netflix.png' },
+  { name: 'Spotify', logo: 'spotify.png' },
+  { name: 'Adobe', logo: 'adobe.png' },
+  { name: 'Notion', logo: 'notion.png' },
+];
+
+// Preload all images in src/assets
+const images = import.meta.glob('@/assets/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' });
+
+const getLogoSrc = (logo: string, name: string) => {
+  // Try to find the image in the preloaded map
+  const match = Object.entries(images).find(([key]) => key.endsWith(`/${logo}`));
+  if (match) {
+    return match[1] as string;
+  }
+  // Fallback to avatar if not found
+  return `https://ui-avatars.com/api/?name=${name.split(' ').join('+')}&background=8A2BE2&color=fff`;
+};
+
 const AddEditSubscriptionModal = ({ isOpen, onClose, onSuccess, subscriptionToEdit }: AddEditSubscriptionModalProps) => {
   const isEditing = !!subscriptionToEdit;
   
@@ -82,7 +110,7 @@ const AddEditSubscriptionModal = ({ isOpen, onClose, onSuccess, subscriptionToEd
     amount: subscriptionToEdit?.amount || undefined,
     billingCycle: subscriptionToEdit?.billingCycle || 'monthly',
     nextBillingDate: subscriptionToEdit?.nextBillingDate ? new Date(subscriptionToEdit.nextBillingDate) : new Date(),
-    category: subscriptionToEdit?.category || undefined,
+    category: subscriptionToEdit?.category || CATEGORIES[0],
     notes: subscriptionToEdit?.notes || '',
   };
 
@@ -91,16 +119,46 @@ const AddEditSubscriptionModal = ({ isOpen, onClose, onSuccess, subscriptionToEd
     defaultValues,
   });
 
+  const [logo, setLogo] = useState(subscriptionToEdit?.logo || '');
+  const [brandSuggestions, setBrandSuggestions] = useState<typeof BRAND_LIST>([]);
+
+  // Autocomplete logic for brand suggestions
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    form.setValue('name', e.target.value);
+    const input = e.target.value.trim().toLowerCase();
+    if (!input) {
+      setBrandSuggestions([]);
+      setLogo('');
+      return;
+    }
+    const matches = BRAND_LIST.filter(b => b.name.toLowerCase().includes(input));
+    setBrandSuggestions(matches);
+    // If exact match, auto-select logo
+    const exact = BRAND_LIST.find(b => b.name.toLowerCase() === input);
+    if (exact) {
+      setLogo(exact.logo);
+    } else {
+      setLogo('');
+    }
+  };
+
+  const handleBrandSelect = (brand: typeof BRAND_LIST[0]) => {
+    form.setValue('name', brand.name);
+    setLogo(brand.logo);
+    setBrandSuggestions([]);
+  };
+
   const onSubmit = async (data: FormValues) => {
     const token = localStorage.getItem('auth_token');
-    // Map frontend fields to backend fields
+    // Use selected logo filename or default
+    const logoFilename = logo || 'default.png';
     const payload = {
       name: data.name,
       price: data.amount,
       cycle: data.billingCycle,
-      next_billing_date: data.nextBillingDate.toISOString().split('T')[0], // format as YYYY-MM-DD
+      next_billing_date: data.nextBillingDate.toISOString().split('T')[0],
       category: data.category,
-      logo: '', // or let user upload/select a logo
+      logo: logoFilename,
     };
     try {
       if (isEditing) {
@@ -144,11 +202,29 @@ const AddEditSubscriptionModal = ({ isOpen, onClose, onSuccess, subscriptionToEd
                 <FormItem>
                   <FormLabel className="text-gray-200">Subscription Name</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="Netflix, Canva, etc." 
-                      {...field} 
-                      className="bg-darkBlue-800 border-purple-900/30 focus-visible:ring-purple-400"
-                    />
+                    <div className="relative">
+                      <Input
+                        placeholder="Netflix, Canva, etc."
+                        value={field.value}
+                        onChange={handleNameChange}
+                        className="bg-darkBlue-800 border-purple-900/30 focus-visible:ring-purple-400"
+                        autoComplete="off"
+                      />
+                      {brandSuggestions.length > 0 && (
+                        <div className="absolute z-10 left-0 right-0 bg-darkBlue-800 border border-purple-900/30 rounded shadow mt-1">
+                          {brandSuggestions.map(brand => (
+                            <div
+                              key={brand.name}
+                              className="flex items-center px-3 py-2 cursor-pointer hover:bg-purple-900/20"
+                              onClick={() => handleBrandSelect(brand)}
+                            >
+                              <img src={getLogoSrc(brand.logo, brand.name)} alt={brand.name} className="h-6 w-6 rounded-full mr-2" />
+                              <span className="text-gray-100">{brand.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </FormControl>
                   <FormMessage className="text-red-400" />
                 </FormItem>
@@ -257,8 +333,9 @@ const AddEditSubscriptionModal = ({ isOpen, onClose, onSuccess, subscriptionToEd
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-gray-200">Category</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
                     <FormControl>

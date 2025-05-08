@@ -25,20 +25,33 @@ interface Subscription {
 interface SubscriptionCardProps {
   subscription: Subscription;
   viewMode: 'grid' | 'list';
+  onEdit: () => void;
+  onDelete: () => void;
 }
 
-const SubscriptionCard = ({ subscription, viewMode }: SubscriptionCardProps) => {
+// Preload all images in src/assets
+const images = import.meta.glob('@/assets/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' });
+
+const getLogoSrc = (logo: string, name: string) => {
+  const match = Object.entries(images).find(([key]) => key.endsWith(`/${logo}`));
+  if (match) {
+    return match[1] as string;
+  }
+  return `https://ui-avatars.com/api/?name=${name.split(' ').join('+')}&background=8A2BE2&color=fff`;
+};
+
+const SubscriptionCard = ({ subscription, viewMode, onEdit, onDelete }: SubscriptionCardProps) => {
   const isApproaching = new Date(subscription.nextBillingDate) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   const formattedPrice = subscription.cycle === 'yearly' 
-    ? `$${subscription.price.toFixed(2)}/yr` 
-    : `$${subscription.price.toFixed(2)}/mo`;
+    ? `$${Number(subscription.price).toFixed(2)}/yr` 
+    : `$${Number(subscription.price).toFixed(2)}/mo`;
   
   const nextBillingDateFormatted = formatDistanceToNow(new Date(subscription.nextBillingDate), { addSuffix: true });
   
   // Handle image error
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     const target = e.target as HTMLImageElement;
-    target.src = `https://ui-avatars.com/api/?name=${subscription.name.split(' ').join('+')}&background=8A2BE2&color=fff`;
+    target.src = getLogoSrc(subscription.logo, subscription.name);
   };
   
   if (viewMode === 'grid') {
@@ -47,12 +60,18 @@ const SubscriptionCard = ({ subscription, viewMode }: SubscriptionCardProps) => 
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
             <div className="h-10 w-10 rounded-full overflow-hidden bg-purple-800/30 flex items-center justify-center">
-              <img 
-                src={subscription.logo}
-                alt={subscription.name}
-                className="h-full w-full object-cover"
-                onError={handleImageError}
-              />
+              {subscription.logo ? (
+                <img
+                  src={getLogoSrc(subscription.logo, subscription.name)}
+                  alt={subscription.name}
+                  className="h-full w-full object-cover"
+                  onError={handleImageError}
+                />
+              ) : (
+                <span className="text-lg font-bold text-white">
+                  {subscription.name.slice(0, 2).toUpperCase()}
+                </span>
+              )}
             </div>
             <div>
               <h3 className="font-semibold text-gray-100">{subscription.name}</h3>
@@ -68,11 +87,11 @@ const SubscriptionCard = ({ subscription, viewMode }: SubscriptionCardProps) => 
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40 bg-darkBlue-700 border-purple-900/20">
-              <DropdownMenuItem className="flex items-center gap-2">
+              <DropdownMenuItem className="flex items-center gap-2" onClick={onEdit}>
                 <Pencil className="h-4 w-4" /> Edit
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-purple-900/20" />
-              <DropdownMenuItem className="flex items-center gap-2 text-red-400">
+              <DropdownMenuItem className="flex items-center gap-2 text-red-400" onClick={onDelete}>
                 <Trash2 className="h-4 w-4" /> Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -103,7 +122,7 @@ const SubscriptionCard = ({ subscription, viewMode }: SubscriptionCardProps) => 
         <div className="flex items-center space-x-4">
           <div className="h-10 w-10 rounded-full overflow-hidden bg-purple-800/30 flex items-center justify-center">
             <img 
-              src={subscription.logo}
+              src={getLogoSrc(subscription.logo, subscription.name)}
               alt={subscription.name}
               className="h-full w-full object-cover"
               onError={handleImageError}
@@ -129,11 +148,11 @@ const SubscriptionCard = ({ subscription, viewMode }: SubscriptionCardProps) => 
           </div>
           
           <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onEdit}>
               <Pencil className="h-4 w-4" />
               <span className="sr-only">Edit</span>
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-400">
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-400" onClick={onDelete}>
               <Trash2 className="h-4 w-4" />
               <span className="sr-only">Delete</span>
             </Button>

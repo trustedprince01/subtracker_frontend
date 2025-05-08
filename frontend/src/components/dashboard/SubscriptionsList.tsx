@@ -34,9 +34,11 @@ const CATEGORIES = ['All', 'Entertainment', 'Work Tools', 'Personal', 'Shopping'
 interface SubscriptionsListProps {
   subscriptions: Subscription[];
   onAdd: () => void;
+  onEdit: (subscription: Subscription) => void;
+  onDelete: (subscription: Subscription) => void;
 }
 
-const SubscriptionsList = ({ subscriptions, onAdd }: SubscriptionsListProps) => {
+const SubscriptionsList = ({ subscriptions, onAdd, onEdit, onDelete }: SubscriptionsListProps) => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [activeCategory, setActiveCategory] = useState('All');
   const [sortOption, setSortOption] = useState('Next billing');
@@ -134,6 +136,8 @@ const SubscriptionsList = ({ subscriptions, onAdd }: SubscriptionsListProps) => 
                   key={subscription.id}
                   subscription={subscription}
                   viewMode={viewMode}
+                  onEdit={() => onEdit(subscription)}
+                  onDelete={() => onDelete(subscription)}
                 />
               ))}
             </div>
