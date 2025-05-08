@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -8,7 +7,6 @@ import ProfileHeader from '@/components/settings/ProfileHeader';
 import AccountInfoCard from '@/components/settings/AccountInfoCard';
 import StatisticsCards from '@/components/settings/StatisticsCards';
 import ActivityTimeline from '@/components/settings/ActivityTimeline';
-import ConnectedAccounts from '@/components/settings/ConnectedAccounts';
 import QuickActions from '@/components/settings/QuickActions';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
@@ -49,7 +47,6 @@ const Settings = () => {
           </div>
         </div>
         <ActivityTimeline />
-        <ConnectedAccounts />
         <QuickActions />
       </div>
     </DashboardLayout>

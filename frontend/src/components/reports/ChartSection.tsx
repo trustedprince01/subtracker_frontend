@@ -1,162 +1,143 @@
-
-import React, { useState } from 'react';
-import { 
-  PieChart, 
-  Pie, 
-  Cell, 
-  ResponsiveContainer, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import React from 'react';
+import { Card } from '@/components/ui/card';
+import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
   Legend,
-  LineChart,
-  Line,
-  AreaChart,
-  Area
-} from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+} from 'chart.js';
 
-// Mock data for the charts
-const categoryData = [
-  { name: 'Entertainment', value: 32, color: '#9370DB' },
-  { name: 'Work Tools', value: 42, color: '#8A2BE2' },
-  { name: 'Shopping', value: 15, color: '#7E69AB' },
-  { name: 'Utilities', value: 11, color: '#6E59A5' },
-];
-
-const monthlyData = [
-  { name: 'Jan', amount: 70 },
-  { name: 'Feb', amount: 82 },
-  { name: 'Mar', amount: 93 },
-  { name: 'Apr', amount: 89 },
-  { name: 'May', amount: 95 },
-  { name: 'Jun', amount: 86 },
-  { name: 'Jul', amount: 90 },
-  { name: 'Aug', amount: 89 },
-  { name: 'Sep', amount: 94 },
-  { name: 'Oct', amount: 98 },
-  { name: 'Nov', amount: 89 },
-  { name: 'Dec', amount: 85 },
-];
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 interface ChartSectionProps {
   timePeriod: string;
+  subscriptions: Array<{
+    id: number;
+    name: string;
+    price: number;
+    category: string;
+    nextBillingDate: string;
+  }>;
 }
 
-const ChartSection = ({ timePeriod }: ChartSectionProps) => {
-  const chartConfig = {
-    spending: {
-      label: "Spending",
-      theme: {
-        dark: "#8A2BE2",
-        light: "#9370DB",
+const ChartSection = ({ timePeriod, subscriptions }: ChartSectionProps) => {
+  // Calculate monthly spending for the last 6 months
+  const months = Array.from({ length: 6 }, (_, i) => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - i);
+    return date.toLocaleString('default', { month: 'short' });
+  }).reverse();
+
+  const monthlySpending = months.map(month => {
+    // For demo purposes, we'll use the current subscriptions
+    // In a real app, you'd want to track historical spending
+    return subscriptions.reduce((sum, sub) => sum + sub.price, 0);
+  });
+
+  const data = {
+    labels: months,
+    datasets: [
+      {
+        label: 'Monthly Spending',
+        data: monthlySpending,
+        borderColor: '#8B5CF6',
+        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+        tension: 0.4,
+        fill: true,
+        pointBackgroundColor: '#8B5CF6',
+        pointBorderColor: '#1E1B4B',
+        pointBorderWidth: 2,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        pointHoverBackgroundColor: '#8B5CF6',
+        pointHoverBorderColor: '#1E1B4B',
+        pointHoverBorderWidth: 2,
+      },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        mode: 'index' as const,
+        intersect: false,
+        backgroundColor: '#1E1B4B',
+        titleColor: '#E5E7EB',
+        bodyColor: '#E5E7EB',
+        borderColor: '#4C1D95',
+        borderWidth: 1,
+        padding: 12,
+        callbacks: {
+          label: (context: any) => {
+            return `Spending: $${context.raw.toFixed(2)}`;
+          },
+          title: (context: any) => {
+            return `Month: ${context[0].label}`;
+          },
+        },
       },
     },
-    savings: {
-      label: "Potential Savings",
-      theme: {
-        dark: "#4B0082",
-        light: "#6E59A5",
+    scales: {
+      x: {
+        grid: {
+          color: 'rgba(75, 85, 99, 0.1)',
+          drawBorder: false,
+        },
+        ticks: {
+          color: '#9CA3AF',
+          padding: 10,
+        },
+        border: {
+          display: false,
+        },
+      },
+      y: {
+        grid: {
+          color: 'rgba(75, 85, 99, 0.1)',
+          drawBorder: false,
+        },
+        ticks: {
+          color: '#9CA3AF',
+          padding: 10,
+          callback: (value: number) => `$${value}`,
+        },
+        border: {
+          display: false,
+        },
+        beginAtZero: true,
       },
     },
-    entertainment: {
-      label: "Entertainment",
-      color: "#9370DB",
-    },
-    workTools: {
-      label: "Work Tools",
-      color: "#8A2BE2",
-    },
-    shopping: {
-      label: "Shopping",
-      color: "#7E69AB",
-    },
-    utilities: {
-      label: "Utilities",
-      color: "#6E59A5",
+    interaction: {
+      mode: 'nearest' as const,
+      axis: 'x' as const,
+      intersect: false,
     },
   };
 
   return (
-    <Card className="border border-purple-900/20 bg-card">
-      <CardHeader>
-        <CardTitle>Spending Analysis</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="category">
-          <TabsList className="bg-darkBlue-700 border border-purple-900/20">
-            <TabsTrigger value="category">By Category</TabsTrigger>
-            <TabsTrigger value="monthly">Monthly Trend</TabsTrigger>
-            <TabsTrigger value="comparison">Year Comparison</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="category" className="h-[300px] mt-4">
-            <div className="h-full w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={categoryData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    innerRadius={50}
-                    dataKey="value"
-                    nameKey="name"
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    labelLine={false}
-                  >
-                    {categoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value) => [`$${value}`, 'Amount']}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="monthly" className="h-[300px] mt-4">
-            <div className="h-full w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#333" opacity={0.2} />
-                  <XAxis dataKey="name" tick={{ fill: '#bbb' }} />
-                  <YAxis tick={{ fill: '#bbb' }} />
-                  <Tooltip 
-                    formatter={(value) => [`$${value}`, 'Amount']}
-                    contentStyle={{ backgroundColor: '#1A1F2C', borderColor: '#8A2BE2' }}
-                  />
-                  <Bar dataKey="amount" fill="#8A2BE2" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="comparison" className="h-[300px] mt-4">
-            <div className="h-full w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#333" opacity={0.2} />
-                  <XAxis dataKey="name" tick={{ fill: '#bbb' }} />
-                  <YAxis tick={{ fill: '#bbb' }} />
-                  <Tooltip 
-                    formatter={(value) => [`$${value}`, 'Amount']}
-                    contentStyle={{ backgroundColor: '#1A1F2C', borderColor: '#8A2BE2' }}
-                  />
-                  <Area type="monotone" dataKey="amount" stroke="#8A2BE2" fill="#8A2BE2" fillOpacity={0.3} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
+    <Card className="p-6 bg-darkBlue-700 border-purple-900/20">
+      <h3 className="text-lg font-semibold text-gray-100 mb-4">Spending Trend</h3>
+      <div className="h-[300px]">
+        <Line data={data} options={options} />
+      </div>
     </Card>
   );
 };

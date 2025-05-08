@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Bell, ChevronDown, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,9 +13,13 @@ import { Input } from '@/components/ui/input';
 
 interface DashboardHeaderProps {
   username: string;
+  search: string;
+  setSearch: (value: string) => void;
+  notifications: { id: number; message: string; read?: boolean }[];
+  onLogout: () => void;
 }
 
-const DashboardHeader = ({ username }: DashboardHeaderProps) => {
+const DashboardHeader = ({ username, search, setSearch, notifications, onLogout }: DashboardHeaderProps) => {
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between px-6 pt-6 pb-2">
       <div>
@@ -31,15 +34,36 @@ const DashboardHeader = ({ username }: DashboardHeaderProps) => {
           <Input
             placeholder="Search subscriptions..."
             className="pl-9 bg-darkBlue-700 border-purple-900/30 focus-visible:ring-purple-400"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
           />
         </div>
         
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-purple-500 text-[10px] font-medium text-white">
-            3
-          </span>
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="relative">
+              <Bell className="h-5 w-5" />
+              {notifications.length > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-purple-500 text-[10px] font-medium text-white">
+                  {notifications.length}
+                </span>
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-72 bg-darkBlue-700 border-purple-900/20">
+            <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-purple-900/20" />
+            {notifications.length === 0 ? (
+              <div className="px-4 py-2 text-gray-400">No notifications</div>
+            ) : (
+              notifications.map(n => (
+                <DropdownMenuItem key={n.id} className="text-gray-100">
+                  {n.message}
+                </DropdownMenuItem>
+              ))
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -57,7 +81,7 @@ const DashboardHeader = ({ username }: DashboardHeaderProps) => {
             <DropdownMenuItem>Billing</DropdownMenuItem>
             <DropdownMenuItem>Settings</DropdownMenuItem>
             <DropdownMenuSeparator className="bg-purple-900/20" />
-            <DropdownMenuItem className="text-red-400">Logout</DropdownMenuItem>
+            <DropdownMenuItem className="text-red-400" onClick={onLogout}>Logout</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

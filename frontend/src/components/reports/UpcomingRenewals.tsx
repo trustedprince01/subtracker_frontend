@@ -1,91 +1,97 @@
-
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Calendar } from 'lucide-react';
 
-const UpcomingRenewals = () => {
-  const today = new Date();
-  const currentMonth = today.toLocaleString('default', { month: 'long' });
-  const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-  
-  const renewals = [
-    { day: 5, name: 'Adobe Creative Cloud', amount: 52.99, logo: 'https://logo.clearbit.com/adobe.com' },
-    { day: 12, name: 'Spotify', amount: 9.99, logo: 'https://logo.clearbit.com/spotify.com' },
-    { day: 15, name: 'Netflix', amount: 13.99, logo: 'https://logo.clearbit.com/netflix.com' },
-    { day: 22, name: 'Disney+', amount: 7.99, logo: 'https://logo.clearbit.com/disneyplus.com' },
-  ];
-  
-  // Calculate days from today
-  const renewalDates = renewals.map(renewal => {
-    const renewalDate = new Date(today.getFullYear(), today.getMonth(), renewal.day);
-    if (renewalDate < today) {
-      renewalDate.setMonth(renewalDate.getMonth() + 1);
-    }
-    
-    const diffTime = Math.abs(renewalDate.getTime() - today.getTime());
+interface UpcomingRenewalsProps {
+  subscriptions: Array<{
+    id: number;
+    name: string;
+    price: number;
+    category: string;
+    nextBillingDate: string;
+    logo: string;
+  }>;
+}
+
+// Preload all images in src/assets
+const images = import.meta.glob('@/assets/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' });
+
+const getLogoSrc = (logo: string, name: string) => {
+  const match = Object.entries(images).find(([key]) => key.endsWith(`/${logo}`));
+  if (match) {
+    return match[1] as string;
+  }
+  // fallback
+  const defaultMatch = Object.entries(images).find(([key]) => key.endsWith('/default.png'));
+  return defaultMatch ? (defaultMatch[1] as string) : '';
+};
+
+const UpcomingRenewals = ({ subscriptions }: UpcomingRenewalsProps) => {
+  // Sort subscriptions by next billing date
+  const sortedSubscriptions = [...subscriptions].sort((a, b) => {
+    return new Date(a.nextBillingDate).getTime() - new Date(b.nextBillingDate).getTime();
+  });
+
+  // Get next 5 upcoming renewals
+  const upcomingRenewals = sortedSubscriptions.slice(0, 5);
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+
+  const getDaysUntil = (dateString: string) => {
+    const today = new Date();
+    const date = new Date(dateString);
+    const diffTime = date.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    return {
-      ...renewal,
-      date: renewalDate,
-      daysFromNow: diffDays,
-      isPast: renewalDate < today
-    };
-  }).sort((a, b) => a.daysFromNow - b.daysFromNow);
+    return diffDays;
+  };
 
   return (
-    <Card className="border border-purple-900/20 bg-card mt-6">
-      <CardHeader>
-        <CardTitle className="flex items-center">
-          <Calendar size={18} className="mr-2 text-purple-300" />
-          Upcoming Renewals
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="relative">
-          <div className="absolute left-0 top-0 bottom-0 w-px bg-purple-900/20 ml-2.5"></div>
-          
-          <div className="relative pb-8 flex flex-col space-y-4">
-            {renewalDates.map((renewal, index) => (
-              <div key={index} className="relative pl-12">
-                <div 
-                  className={`absolute left-0 w-5 h-5 rounded-full mt-1.5 border-2 
-                  ${renewal.daysFromNow <= 7 
-                    ? 'bg-red-500/20 border-red-500' 
-                    : 'bg-purple-500/20 border-purple-500'
-                  }`}
-                >
+    <Card className="p-6 bg-darkBlue-700 border-purple-900/20">
+      <h3 className="text-lg font-semibold text-gray-100 mb-4">Upcoming Renewals</h3>
+      <div className="relative pl-8">
+        {/* Vertical wall */}
+        <div className="absolute left-3 top-0 bottom-0 w-px bg-purple-900/30" />
+        <div className="space-y-4">
+          {upcomingRenewals.map((subscription, idx) => {
+            const daysUntil = getDaysUntil(subscription.nextBillingDate);
+            const logoSrc = getLogoSrc(subscription.logo, subscription.name);
+            return (
+              <div
+                key={subscription.id}
+                className="relative flex items-center justify-between p-3 rounded-lg bg-darkBlue-800/50 border border-purple-900/20"
+              >
+                {/* Dot on the wall with logo */}
+                <div className="absolute left-[-2.5rem] flex flex-col items-center" style={{ top: '50%', transform: 'translateY(-50%)' }}>
+                  <img src={logoSrc} alt={subscription.name} className="h-7 w-7 rounded-lg object-cover" />
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    {renewal.logo && (
-                      <img 
-                        src={renewal.logo} 
-                        alt={renewal.name} 
-                        className="w-6 h-6 rounded mr-3"
-                      />
-                    )}
-                    <div>
-                      <h4 className="font-medium text-white text-sm">{renewal.name}</h4>
-                      <p className="text-xs text-gray-400">
-                        {renewal.daysFromNow === 0 ? 'Today' : 
-                         renewal.daysFromNow === 1 ? 'Tomorrow' : 
-                         `In ${renewal.daysFromNow} days`}
-                      </p>
-                    </div>
+                <div className="flex items-center space-x-3">
+                  <div>
+                    <p className="font-medium text-gray-100">{subscription.name}</p>
+                    <p className="text-sm text-gray-400">{subscription.category}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium text-white">${renewal.amount}</p>
-                    <p className="text-xs text-gray-400">
-                      {renewal.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    </p>
-                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-medium text-gray-100">${subscription.price}</p>
+                  <p className="text-sm text-gray-400">
+                    {daysUntil === 0
+                      ? 'Due today'
+                      : daysUntil === 1
+                      ? 'Due tomorrow'
+                      : `Due in ${daysUntil} days`}
+                  </p>
                 </div>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
-      </CardContent>
+      </div>
     </Card>
   );
 };
