@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,10 +6,47 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Eye, EyeOff, User, Mail, Shield } from 'lucide-react';
+import axios from 'axios';
+
 
 interface AuthFormProps {
   type: 'login' | 'signup';
 }
+
+const API_URL = 'http://localhost:8000/api';
+
+const handleSignup = async (email: string, password: string) => {
+  try {
+    const response = await axios.post(`${API_URL}/register/`, {
+      username: email,
+      email: email,
+      password: password
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const storeAuthToken = (token: string) => {
+  localStorage.setItem('auth_token', token);
+};
+
+const handleLogin = async (email: string, password: string) => {
+  try {
+    const response = await axios.post(`${API_URL}/login/`, {
+      username: email,
+      password: password
+    });
+    // Store the token
+    if (response.data.access) {
+      storeAuthToken(response.data.access);
+    }
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
 
 const AuthForm = ({ type }: AuthFormProps) => {
   const [email, setEmail] = useState('');
@@ -92,7 +128,7 @@ const AuthForm = ({ type }: AuthFormProps) => {
     }
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Form validation
@@ -123,15 +159,45 @@ const AuthForm = ({ type }: AuthFormProps) => {
         });
         return;
       }
+
+      try {
+        // Call the signup API
+        await handleSignup(email, password);
+        
+        toast({
+          title: "Account Created",
+          description: "Your account has been created successfully.",
+        });
+        
+        // Redirect to login page after successful signup
+        window.location.href = '/login';
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to create account. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } else {
+      try {
+        // Call the login API
+        await handleLogin(email, password);
+        
+        toast({
+          title: "Login Successful",
+          description: "Welcome back to SubTrackr!",
+        });
+        
+        // Redirect to dashboard after successful login
+        window.location.href = '/dashboard';
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Invalid email or password. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
-    
-    // Mock authentication
-    toast({
-      title: isLogin ? "Login Successful" : "Account Created",
-      description: isLogin 
-        ? "Welcome back to SubTrackr!" 
-        : "Your account has been created successfully.",
-    });
   };
   
   return (

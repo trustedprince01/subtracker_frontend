@@ -1,9 +1,12 @@
-
 import React from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const SubscriptionEmptyState = () => {
+interface SubscriptionEmptyStateProps {
+  onAdd: () => void;
+}
+
+const SubscriptionEmptyState = ({ onAdd }: SubscriptionEmptyStateProps) => {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 border border-dashed border-purple-900/30 rounded-xl bg-darkBlue-700/50 animate-fade-in">
       <div className="h-24 w-24 mb-6 rounded-full bg-gradient-to-br from-purple-900/20 to-purple-800/20 flex items-center justify-center">
@@ -28,7 +31,7 @@ const SubscriptionEmptyState = () => {
       <p className="text-gray-400 text-center mb-6 max-w-md">
         Start tracking your recurring expenses by adding your first subscription.
       </p>
-      <Button className="bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800">
+      <Button onClick={onAdd} className="bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800">
         <Plus className="h-5 w-5 mr-2" /> Add your first subscription
       </Button>
     </div>

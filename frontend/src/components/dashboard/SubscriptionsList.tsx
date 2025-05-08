@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Grid3X3, List, ChevronDown, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SubscriptionCard from './SubscriptionCard';
 import SubscriptionEmptyState from './SubscriptionEmptyState';
+import axios from 'axios';
 
 // Define the Subscription type with a specific union type for cycle
 type Subscription = {
@@ -26,53 +27,19 @@ type Subscription = {
   logo: string;
 };
 
-// Mock data for testing - this would come from API/database
-const MOCK_SUBSCRIPTIONS: Subscription[] = [
-  {
-    id: '1',
-    name: 'Netflix',
-    price: 13.99,
-    cycle: 'monthly',
-    nextBillingDate: '2023-06-15',
-    category: 'Entertainment',
-    logo: 'https://logo.clearbit.com/netflix.com'
-  },
-  {
-    id: '2',
-    name: 'Spotify',
-    price: 9.99,
-    cycle: 'monthly',
-    nextBillingDate: '2023-06-20',
-    category: 'Entertainment',
-    logo: 'https://logo.clearbit.com/spotify.com'
-  },
-  {
-    id: '3',
-    name: 'Adobe Creative Cloud',
-    price: 52.99,
-    cycle: 'monthly',
-    nextBillingDate: '2023-06-05',
-    category: 'Work Tools',
-    logo: 'https://logo.clearbit.com/adobe.com'
-  },
-  {
-    id: '4',
-    name: 'Amazon Prime',
-    price: 139,
-    cycle: 'yearly',
-    nextBillingDate: '2023-11-12',
-    category: 'Shopping',
-    logo: 'https://logo.clearbit.com/amazon.com'
-  },
-];
+const API_URL = 'http://localhost:8000/api/subscriptions/';
 
 const CATEGORIES = ['All', 'Entertainment', 'Work Tools', 'Personal', 'Shopping', 'Utilities'];
 
-const SubscriptionsList = () => {
+interface SubscriptionsListProps {
+  subscriptions: Subscription[];
+  onAdd: () => void;
+}
+
+const SubscriptionsList = ({ subscriptions, onAdd }: SubscriptionsListProps) => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [activeCategory, setActiveCategory] = useState('All');
   const [sortOption, setSortOption] = useState('Next billing');
-  const [subscriptions] = useState<Subscription[]>(MOCK_SUBSCRIPTIONS);
 
   const filteredSubscriptions = activeCategory === 'All' 
     ? subscriptions 
@@ -185,7 +152,7 @@ const SubscriptionsList = () => {
           </TabsContent>
         </Tabs>
       ) : (
-        <SubscriptionEmptyState />
+        <SubscriptionEmptyState onAdd={onAdd} />
       )}
     </div>
   );

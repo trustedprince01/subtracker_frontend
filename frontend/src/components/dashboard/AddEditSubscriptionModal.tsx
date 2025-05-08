@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { CalendarIcon, X } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -43,10 +42,12 @@ import { Calendar } from '@/components/ui/calendar';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import axios from 'axios';
 
 interface AddEditSubscriptionModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess: () => void;
   subscriptionToEdit?: any; // Replace with your subscription type
 }
 
@@ -73,7 +74,7 @@ const CATEGORIES = [
   'Other'
 ];
 
-const AddEditSubscriptionModal = ({ isOpen, onClose, subscriptionToEdit }: AddEditSubscriptionModalProps) => {
+const AddEditSubscriptionModal = ({ isOpen, onClose, onSuccess, subscriptionToEdit }: AddEditSubscriptionModalProps) => {
   const isEditing = !!subscriptionToEdit;
   
   const defaultValues: Partial<FormValues> = {
@@ -90,17 +91,34 @@ const AddEditSubscriptionModal = ({ isOpen, onClose, subscriptionToEdit }: AddEd
     defaultValues,
   });
 
-  const onSubmit = (data: FormValues) => {
-    console.log("Form data:", data);
-    
-    // Show success message
-    toast.success(
-      isEditing ? "Subscription updated successfully!" : "Subscription added successfully!"
-    );
-    
-    // Close modal after submission
-    onClose();
-    form.reset();
+  const onSubmit = async (data: FormValues) => {
+    const token = localStorage.getItem('auth_token');
+    // Map frontend fields to backend fields
+    const payload = {
+      name: data.name,
+      price: data.amount,
+      cycle: data.billingCycle,
+      next_billing_date: data.nextBillingDate.toISOString().split('T')[0], // format as YYYY-MM-DD
+      category: data.category,
+      logo: '', // or let user upload/select a logo
+    };
+    try {
+      if (isEditing) {
+        await axios.put(`http://localhost:8000/api/subscriptions/${subscriptionToEdit.id}/`, payload, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        toast.success("Subscription updated successfully!");
+      } else {
+        await axios.post('http://localhost:8000/api/subscriptions/', payload, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        toast.success("Subscription added successfully!");
+      }
+      onSuccess();
+      onClose();
+    } catch (error) {
+      toast.error("An error occurred. Please try again later.");
+    }
   };
 
   return (

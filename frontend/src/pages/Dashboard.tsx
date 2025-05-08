@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
@@ -7,10 +6,26 @@ import SubscriptionsList from '@/components/dashboard/SubscriptionsList';
 import AddSubscriptionButton from '@/components/dashboard/AddSubscriptionButton';
 import AddEditSubscriptionModal from '@/components/dashboard/AddEditSubscriptionModal';
 import { Toaster } from 'sonner';
+import axios from 'axios';
 
 const Dashboard = () => {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [subscriptions, setSubscriptions] = useState([]);
   const username = "Alex"; // This would come from user authentication
+
+  const fetchSubscriptions = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await axios.get('http://localhost:8000/api/subscriptions/', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSubscriptions(response.data);
+    } catch (error) {
+      setSubscriptions([]);
+    }
+  };
+
+  React.useEffect(() => { fetchSubscriptions(); }, []);
 
   return (
     <DashboardLayout>
@@ -18,11 +33,12 @@ const Dashboard = () => {
       <DashboardHeader username={username} />
       <div className="p-6 space-y-6">
         <SummaryCards />
-        <SubscriptionsList />
+        <SubscriptionsList subscriptions={subscriptions} onAdd={() => setShowAddModal(true)} />
         <AddSubscriptionButton onClick={() => setShowAddModal(true)} />
         <AddEditSubscriptionModal 
           isOpen={showAddModal} 
           onClose={() => setShowAddModal(false)} 
+          onSuccess={fetchSubscriptions}
         />
       </div>
     </DashboardLayout>
