@@ -59,7 +59,7 @@ const Dashboard = () => {
       <Toaster position="top-right" />
       <DashboardHeader username={username} />
       <div className="p-6 space-y-6">
-        <SummaryCards />
+        <SummaryCards subscriptions={subscriptions} />
         <SubscriptionsList 
           subscriptions={subscriptions} 
           onAdd={() => setShowAddModal(true)}

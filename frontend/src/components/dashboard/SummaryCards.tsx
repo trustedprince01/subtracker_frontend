@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { TrendingUp, Calendar, Tag, Clock } from 'lucide-react';
 
@@ -36,33 +35,49 @@ const SummaryCard = ({ title, value, icon, gradientFrom, gradientTo }: SummaryCa
   );
 };
 
-const SummaryCards = () => {
+interface SummaryCardsProps {
+  subscriptions: any[];
+}
+
+const SummaryCards = ({ subscriptions }: SummaryCardsProps) => {
+  const monthly = subscriptions.reduce((sum, sub) => sum + (sub.cycle === 'monthly' ? sub.price : 0), 0);
+  const yearly = subscriptions.reduce((sum, sub) => sum + (sub.cycle === 'yearly' ? sub.price : 0), 0);
+  const monthlyCost = monthly + yearly / 12;
+  const yearlyEstimate = yearly + monthly * 12;
+  const activeCount = subscriptions.length;
+  const now = new Date();
+  const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const upcomingPayments = subscriptions.filter(sub => {
+    const date = new Date(sub.nextBillingDate);
+    return date >= now && date <= weekFromNow;
+  }).length;
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <SummaryCard
         title="Monthly Cost"
-        value="$89/mo"
+        value={`$${monthlyCost.toLocaleString(undefined, { maximumFractionDigits: 2 })}/mo`}
         icon={<TrendingUp size={20} className="text-white" />}
         gradientFrom="#8A2BE2"
         gradientTo="#4B0082"
       />
       <SummaryCard
         title="Yearly Estimate"
-        value="$1,068/yr"
+        value={`$${yearlyEstimate.toLocaleString(undefined, { maximumFractionDigits: 0 })}/yr`}
         icon={<Calendar size={20} className="text-white" />}
         gradientFrom="#9370DB"
         gradientTo="#8A2BE2"
       />
       <SummaryCard
         title="Active Subscriptions"
-        value="12 Active"
+        value={`${activeCount} Active`}
         icon={<Tag size={20} className="text-white" />}
         gradientFrom="#7E69AB"
         gradientTo="#9370DB"
       />
       <SummaryCard
         title="Upcoming Payments"
-        value="3 This Week"
+        value={`${upcomingPayments} This Week`}
         icon={<Clock size={20} className="text-white" />}
         gradientFrom="#6E59A5"
         gradientTo="#7E69AB"
