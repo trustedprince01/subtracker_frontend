@@ -1,0 +1,141 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 260 25% 11%;
+    --foreground: 210 40% 98%;
+
+    --card: 260 20% 12%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 260 25% 11%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 265 70% 60%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 260 30% 40%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 260 15% 25%;
+    --muted-foreground: 217.9 10.6% 75%;
+
+    --accent: 265 70% 60%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 260 15% 25%;
+    --input: 260 15% 25%;
+    --ring: 265 70% 60%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 260 25% 11%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 265 70% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 260 15% 25%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 260 15% 25%;
+    --sidebar-ring: 265 70% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-darkBlue-800 text-gray-100;
+    background-image: radial-gradient(circle at 50% 0%, rgba(138, 43, 226, 0.15) 0%, rgba(18, 18, 41, 0.2) 50%, rgba(24, 18, 43, 0.05) 100%);
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight;
+  }
+  
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .writing-effect {
+    @apply overflow-hidden whitespace-nowrap border-r-4 border-purple-300;
+    animation: writing-effect 2.5s steps(40, end) forwards, blink-caret 0.75s step-end infinite;
+  }
+  
+  .hover-grow {
+    @apply transition-transform duration-200 ease-in-out;
+  }
+  
+  .hover-grow:hover {
+    @apply transform scale-105;
+  }
+  
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-purple-300 focus:ring-offset-2 focus:border-purple-300;
+  }
+  
+  .bg-glass {
+    @apply bg-opacity-10 backdrop-blur-md border border-gray-100 border-opacity-10;
+  }
+  
+  @keyframes blink-caret {
+    from, to { border-color: transparent }
+    50% { border-color: theme('colors.green.400') }
+  }
+  
+  .particle {
+    @apply absolute rounded-full bg-purple-300 bg-opacity-20;
+    animation-name: particle-move;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+  }
+  
+  .gradient-text {
+    @apply text-transparent bg-clip-text bg-purple-gradient animate-gradient-shift;
+    background-size: 200% 200%;
+  }
+  
+  .button-glow:hover {
+    box-shadow: 0 0 20px theme('colors.green.400');
+  }
+  
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer utilities {
+  .animation-delay-100 {
+    animation-delay: 100ms;
+  }
+  
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+  
+  .animation-delay-300 {
+    animation-delay: 300ms;
+  }
+  
+  .animation-delay-400 {
+    animation-delay: 400ms;
+  }
+  
+  .animation-delay-500 {
+    animation-delay: 500ms;
+  }
+}
+
