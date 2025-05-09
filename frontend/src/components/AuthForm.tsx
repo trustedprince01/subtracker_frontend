@@ -28,8 +28,11 @@ const handleSignup = async (email: string, password: string) => {
   }
 };
 
-const storeAuthToken = (token: string) => {
-  localStorage.setItem('auth_token', token);
+const storeAuthToken = (access: string, refresh?: string) => {
+  localStorage.setItem('access_token', access);
+  if (refresh) {
+    localStorage.setItem('refresh_token', refresh);
+  }
 };
 
 const handleLogin = async (email: string, password: string) => {
@@ -39,8 +42,8 @@ const handleLogin = async (email: string, password: string) => {
       password: password
     });
     // Store the token
-    if (response.data.access) {
-      storeAuthToken(response.data.access);
+    if (response.data.access && response.data.refresh) {
+      storeAuthToken(response.data.access, response.data.refresh);
     }
     return response.data;
   } catch (error) {
@@ -55,6 +58,9 @@ const AuthForm = ({ type }: AuthFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [username, setUsername] = useState('');
   const { toast } = useToast();
   
   const isLogin = type === 'login';
@@ -132,7 +138,7 @@ const AuthForm = ({ type }: AuthFormProps) => {
     e.preventDefault();
     
     // Form validation
-    if (!email || !password) {
+    if (!email || !password || (!isLogin && (!firstName || !lastName || !username))) {
       toast({
         title: "Error",
         description: "Please fill in all required fields.",
@@ -162,7 +168,13 @@ const AuthForm = ({ type }: AuthFormProps) => {
 
       try {
         // Call the signup API
-        await handleSignup(email, password);
+        await axios.post(`${API_URL}/register/`, {
+          username,
+          email,
+          password,
+          first_name: firstName,
+          last_name: lastName,
+        });
         
         toast({
           title: "Account Created",
@@ -334,6 +346,62 @@ const AuthForm = ({ type }: AuthFormProps) => {
                   <p className="text-xs text-red-400 mt-1">Passwords do not match</p>
                 )}
               </div>
+            )}
+
+            {!isLogin && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="firstName" className="text-gray-200">First Name</Label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
+                      <User size={18} />
+                    </div>
+                    <Input
+                      id="firstName"
+                      type="text"
+                      placeholder="First Name"
+                      value={firstName}
+                      onChange={e => setFirstName(e.target.value)}
+                      className="bg-darkBlue-800 bg-opacity-50 border-purple-900 border-opacity-30 pl-10 focus-visible:ring-purple-400 focus-visible:border-purple-400 text-gray-100"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName" className="text-gray-200">Last Name</Label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
+                      <User size={18} />
+                    </div>
+                    <Input
+                      id="lastName"
+                      type="text"
+                      placeholder="Last Name"
+                      value={lastName}
+                      onChange={e => setLastName(e.target.value)}
+                      className="bg-darkBlue-800 bg-opacity-50 border-purple-900 border-opacity-30 pl-10 focus-visible:ring-purple-400 focus-visible:border-purple-400 text-gray-100"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="username" className="text-gray-200">Username</Label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
+                      <User size={18} />
+                    </div>
+                    <Input
+                      id="username"
+                      type="text"
+                      placeholder="Username"
+                      value={username}
+                      onChange={e => setUsername(e.target.value)}
+                      className="bg-darkBlue-800 bg-opacity-50 border-purple-900 border-opacity-30 pl-10 focus-visible:ring-purple-400 focus-visible:border-purple-400 text-gray-100"
+                      required
+                    />
+                  </div>
+                </div>
+              </>
             )}
 
             {isLogin && (
