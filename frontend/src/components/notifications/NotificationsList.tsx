@@ -1,24 +1,69 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import NotificationCard, { NotificationProps } from './NotificationCard';
 import { toast } from 'sonner';
+import axios from 'axios';
+import { getAccessToken } from '@/lib/auth';
 
 interface NotificationsListProps {
   filter: string;
   notifications: NotificationProps[];
 }
 
-const NotificationsList = ({ filter, notifications }: NotificationsListProps) => {
-  const [localNotifications, setLocalNotifications] = React.useState(notifications);
+const NotificationsList = ({ filter }: { filter: string }) => {
+  const [localNotifications, setLocalNotifications] = useState<NotificationProps[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  React.useEffect(() => {
-    setLocalNotifications(notifications);
-  }, [notifications]);
+  useEffect(() => {
+    const fetchUserActivities = async () => {
+      try {
+        setIsLoading(true);
+        const token = getAccessToken();
+        const response = await axios.get('http://localhost:8000/api/user/activities/', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
 
-  const handleMarkAsRead = (id: string) => {
-    setLocalNotifications(localNotifications.map(notification => 
-      notification.id === id ? { ...notification, isRead: true } : notification
-    ));
-    toast.success('Notification marked as read');
+        const activities = response.data.map(activity => ({
+          id: activity.id.toString(),
+          type: getNotificationType(activity.type),
+          title: getNotificationTitle(activity.type),
+          message: activity.description,
+          timestamp: new Date(activity.timestamp),
+          isRead: false,
+          onMarkAsRead: () => {}
+        }));
+
+        setLocalNotifications(activities);
+      } catch (error) {
+        console.error('Failed to fetch user activities', error);
+        toast.error('Could not load notifications');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserActivities();
+  }, []);
+
+  const getNotificationType = (activityType: string): NotificationProps['type'] => {
+    const typeMap = {
+      'subscription_added': 'feature',
+      'subscription_removed': 'account',
+      'profile_updated': 'tip',
+      'login': 'payment',
+      'password_changed': 'account'
+    };
+    return typeMap[activityType] || 'tip';
+  };
+
+  const getNotificationTitle = (activityType: string): string => {
+    const titleMap = {
+      'subscription_added': 'New Subscription',
+      'subscription_removed': 'Subscription Removed',
+      'profile_updated': 'Profile Updated',
+      'login': 'New Login',
+      'password_changed': 'Security Update'
+    };
+    return titleMap[activityType] || 'Activity Notification';
   };
 
   const filteredNotifications = localNotifications.filter(notification => {
@@ -28,13 +73,20 @@ const NotificationsList = ({ filter, notifications }: NotificationsListProps) =>
     return true;
   });
 
+  if (isLoading) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-gray-400">Loading notifications...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       {filteredNotifications.map(notification => (
         <NotificationCard 
           key={notification.id}
           {...notification}
-          onMarkAsRead={handleMarkAsRead}
         />
       ))}
       

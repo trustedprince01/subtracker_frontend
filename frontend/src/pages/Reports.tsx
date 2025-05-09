@@ -15,7 +15,7 @@ const Reports = () => {
 
   const fetchSubscriptions = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('access_token');
       const response = await axios.get('http://localhost:8000/api/subscriptions/', {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -26,7 +26,30 @@ const Reports = () => {
         price: Number(sub.price),
       }));
       setSubscriptions(mapped);
-    } catch (error) {
+    } catch (error: any) {
+      // Check if token is invalid
+      if (error.response?.status === 401) {
+        try {
+          const refreshToken = localStorage.getItem('refresh_token');
+          const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
+            refresh: refreshToken
+          });
+          
+          // Update tokens
+          localStorage.setItem('access_token', refreshResponse.data.access);
+          if (refreshResponse.data.refresh) {
+            localStorage.setItem('refresh_token', refreshResponse.data.refresh);
+          }
+          
+          // Retry fetching subscriptions
+          return fetchSubscriptions();
+        } catch (refreshError) {
+          // If refresh fails, redirect to login
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          window.location.href = '/login';
+        }
+      }
       setSubscriptions([]);
     }
   };

@@ -150,7 +150,7 @@ const AddEditSubscriptionModal = ({ isOpen, onClose, onSuccess, subscriptionToEd
   };
 
   const onSubmit = async (data: FormValues) => {
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('access_token');
     // Use selected logo filename or default
     const logoFilename = logo || 'default.png';
     const payload = {
@@ -177,6 +177,33 @@ const AddEditSubscriptionModal = ({ isOpen, onClose, onSuccess, subscriptionToEd
       onClose();
     } catch (error: any) {
       console.error('Subscription add/edit error:', error.response?.data);
+      
+      // Check if token is invalid or expired
+      if (error.response?.status === 401) {
+        try {
+          // Attempt to refresh token
+          const refreshToken = localStorage.getItem('refresh_token');
+          const response = await axios.post('http://localhost:8000/api/token/refresh/', {
+            refresh: refreshToken
+          });
+          
+          // Update tokens
+          localStorage.setItem('access_token', response.data.access);
+          if (response.data.refresh) {
+            localStorage.setItem('refresh_token', response.data.refresh);
+          }
+          
+          // Retry the original submission
+          return onSubmit(data);
+        } catch (refreshError) {
+          // If refresh fails, redirect to login
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          window.location.href = '/login';
+          return;
+        }
+      }
+      
       // Check for duplicate error
       if (
         error.response &&

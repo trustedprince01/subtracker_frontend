@@ -18,7 +18,6 @@ const API_URL = 'http://localhost:8000/api';
 const handleSignup = async (email: string, password: string) => {
   try {
     const response = await axios.post(`${API_URL}/register/`, {
-      username: email,
       email: email,
       password: password
     });

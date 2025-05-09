@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bell, ChevronDown, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,6 +10,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from '@/components/ui/input';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 interface DashboardHeaderProps {
   username: string;
@@ -19,12 +21,48 @@ interface DashboardHeaderProps {
   onLogout: () => void;
 }
 
-const DashboardHeader = ({ username, search, setSearch, notifications, onLogout }: DashboardHeaderProps) => {
+const DashboardHeader = ({ username: initialUsername, search, setSearch, notifications, onLogout }: DashboardHeaderProps) => {
+  const navigate = useNavigate();
+  const [userAvatar, setUserAvatar] = useState('/default-avatar.png');
+  const [username, setUsername] = useState(initialUsername);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const token = localStorage.getItem('access_token');
+        const response = await axios.get('http://localhost:8000/api/user/profile/me/', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        // Update avatar
+        if (response.data.avatar) {
+          setUserAvatar(response.data.avatar);
+        }
+        
+        // Update username
+        if (response.data.username) {
+          setUsername(response.data.username);
+        } else if (response.data.email) {
+          // Fallback to email username if needed
+          setUsername(response.data.email.split('@')[0]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user profile', error);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+
+  const handleProfileClick = () => {
+    navigate('/settings');
+  };
+
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between px-6 pt-6 pb-2">
       <div>
         <h1 className="text-2xl md:text-3xl font-bold text-gray-100">
-          Hey {username}, <span className="text-gray-300">here's your dashboard</span>
+          Hey {username || 'User'}, <span className="text-gray-300">here's your dashboard</span>
         </h1>
       </div>
       
@@ -68,18 +106,19 @@ const DashboardHeader = ({ username, search, setSearch, notifications, onLogout 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center space-x-2">
-              <div className="w-7 h-7 rounded-full bg-purple-800/50 flex items-center justify-center">
-                <span className="text-xs font-medium text-purple-300">AJ</span>
-              </div>
+              <img 
+                src={userAvatar} 
+                alt="Profile" 
+                className="w-7 h-7 rounded-full object-cover"
+              />
               <ChevronDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 bg-darkBlue-700 border-purple-900/20">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-purple-900/20" />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Billing</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleProfileClick}>Profile</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleProfileClick}>Settings</DropdownMenuItem>
             <DropdownMenuSeparator className="bg-purple-900/20" />
             <DropdownMenuItem className="text-red-400" onClick={onLogout}>Logout</DropdownMenuItem>
           </DropdownMenuContent>

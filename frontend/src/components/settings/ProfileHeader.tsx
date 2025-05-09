@@ -202,10 +202,13 @@ const ProfileHeader = () => {
         return;
       }
 
-      const response = await api.patch(`/user/profile/${user.id}/`, {
+      const token = localStorage.getItem('access_token');
+      const response = await axios.patch('http://localhost:8000/api/user/profile/me/', {
         first_name: editData.firstName.trim(),
         last_name: editData.lastName.trim(),
         username: editData.username.trim()
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
       });
       
       setUser(prev => ({
@@ -218,13 +221,17 @@ const ProfileHeader = () => {
       
       toast.success('Profile updated successfully');
       setEditOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating profile:', error);
       
       // More detailed error handling
       if (error.response) {
         // The request was made and the server responded with a status code
-        const errorMessage = error.response.data.details || error.response.data.error || 'Failed to update profile';
+        const errorMessage = 
+          error.response.data.username?.[0] || // Handle username-specific errors
+          error.response.data.details || 
+          error.response.data.error || 
+          'Failed to update profile';
         toast.error(errorMessage);
       } else if (error.request) {
         // The request was made but no response was received
@@ -281,7 +288,7 @@ const ProfileHeader = () => {
         <div className="flex-1 text-center sm:text-left">
           <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             <h2 className="text-2xl sm:text-3xl font-bold text-white">
-              Hey, {user.name}!
+              Hey, {user.username}!
             </h2>
             {user.isPremium && (
               <Badge className="bg-gradient-to-r from-purple-500 to-purple-700 text-white border-none">
