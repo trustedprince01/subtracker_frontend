@@ -234,19 +234,12 @@ const AuthForm = ({ type }: AuthFormProps) => {
         <div className="bg-darkBlue-700 shadow-xl rounded-lg py-10 px-8 border border-purple-900 border-opacity-20 bg-opacity-70 backdrop-blur-lg">
           <div className="flex justify-center mb-6">
             <div className="text-xl font-bold text-purple-300 flex items-center">
-              <svg 
-                className="w-7 h-7 mr-2"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                <line x1="8" y1="21" x2="16" y2="21"></line>
-                <line x1="12" y1="17" x2="12" y2="21"></line>
-              </svg>
+              <img 
+                src="/activity.png" 
+                alt="SubTrackr Logo" 
+                className="w-10 h-10 mr-2"
+                style={{ display: 'inline-block', verticalAlign: 'middle' }}
+              />
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-300 to-purple-400">
                 SubTrackr
               </span>

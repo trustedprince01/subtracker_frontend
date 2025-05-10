@@ -17,7 +17,7 @@ const MockupShowcase = () => {
           {/* Mockup image from user's upload */}
           <div className="rounded-xl overflow-hidden shadow-2xl border border-purple-900/30">
             <img 
-              src="/lovable-uploads/853a3867-e86b-445f-a8c0-1a656d4ff56e.png" 
+              src="/backgroundimage/mockup.png" 
               alt="SubTrackr Dashboard Mockup" 
               className="w-full h-auto object-cover"
             />

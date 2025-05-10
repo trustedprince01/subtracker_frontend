@@ -1,4 +1,3 @@
-
 import React from 'react';
 import AuthForm from '@/components/AuthForm';
 import { Link } from 'react-router-dom';
@@ -11,17 +10,12 @@ const Login = () => {
           to="/" 
           className="flex items-center text-purple-300 hover:text-purple-400 transition-colors"
         >
-          <svg 
-            className="w-6 h-6 mr-2" 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-          >
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
+          <img 
+            src="/activity.png" 
+            alt="SubTrackr Logo" 
+            className="w-6 h-6 mr-2"
+            style={{ display: 'inline-block', verticalAlign: 'middle' }}
+          />
           Back to home
         </Link>
       </div>

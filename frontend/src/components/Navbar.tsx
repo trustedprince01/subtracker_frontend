@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -31,19 +30,12 @@ const Navbar = () => {
       <div className="container mx-auto px-4 h-16 md:h-20 flex items-center justify-between">
         <Link to="/" className="flex items-center">
           <div className="text-xl md:text-2xl font-bold text-green-400 flex items-center">
-            <svg 
-              className="w-6 h-6 md:w-8 md:h-8 mr-2 text-green-400"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-              <line x1="8" y1="21" x2="16" y2="21"></line>
-              <line x1="12" y1="17" x2="12" y2="21"></line>
-            </svg>
+            <img 
+              src="/activity.png" 
+              alt="SubTrackr Logo" 
+              className="w-6 h-6 md:w-8 md:h-8 mr-2"
+              style={{ display: 'inline-block', verticalAlign: 'middle' }}
+            />
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-green-500 font-inter">
               SubTrackr
             </span>
