@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Mail } from 'lucide-react';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000/api/auth';
+const API_URL = `${import.meta.env.VITE_API_URL}/auth`;
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');

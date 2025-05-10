@@ -27,7 +27,7 @@ type Subscription = {
   logo: string;
 };
 
-const API_URL = 'http://localhost:8000/api/subscriptions/';
+const API_URL = `${import.meta.env.VITE_API_URL}/subscriptions/`;
 
 const CATEGORIES = ['All', 'Entertainment', 'Work Tools', 'Personal', 'Shopping', 'Utilities'];
 
