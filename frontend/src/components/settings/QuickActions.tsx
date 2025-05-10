@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -38,7 +37,7 @@ const QuickActions = () => {
           <Button 
             variant="outline" 
             className="h-auto py-4 px-3 flex flex-col items-center gap-2 bg-darkBlue-800/60 hover:bg-purple-900/20 border-purple-900/20"
-            onClick={() => handleActionClick('Contact Support')}
+            onClick={() => window.open('https://x.com/JokerElon', '_blank')}
           >
             <Mail className="h-5 w-5 text-green-300" />
             <span className="text-sm">Contact Support</span>
