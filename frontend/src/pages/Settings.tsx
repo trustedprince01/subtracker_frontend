@@ -12,6 +12,8 @@ import QuickActions from '@/components/settings/QuickActions';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const Settings = () => {
   const [subscriptions, setSubscriptions] = useState([]);
   const navigate = useNavigate();
@@ -20,7 +22,7 @@ const Settings = () => {
     const fetchSubscriptions = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('/api/subscriptions/', {
+        const response = await axios.get(`${API_URL}/subscriptions/`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setSubscriptions(response.data);

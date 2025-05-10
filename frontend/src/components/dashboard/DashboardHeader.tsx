@@ -21,6 +21,8 @@ interface DashboardHeaderProps {
   onLogout: () => void;
 }
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const DashboardHeader = ({ username: initialUsername, search, setSearch, notifications, onLogout }: DashboardHeaderProps) => {
   const navigate = useNavigate();
   const [userAvatar, setUserAvatar] = useState('/default-avatar.png');
@@ -30,7 +32,7 @@ const DashboardHeader = ({ username: initialUsername, search, setSearch, notific
     const fetchUserProfile = async () => {
       try {
         const token = localStorage.getItem('access_token');
-        const response = await axios.get('http://localhost:8000/api/user/profile/me/', {
+        const response = await axios.get(`${API_URL}/user/profile/me/`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         

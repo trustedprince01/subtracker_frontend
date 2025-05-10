@@ -102,6 +102,8 @@ const getLogoSrc = (logo: string, name: string) => {
   return `https://ui-avatars.com/api/?name=${name.split(' ').join('+')}&background=8A2BE2&color=fff`;
 };
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const AddEditSubscriptionModal = ({ isOpen, onClose, onSuccess, subscriptionToEdit }: AddEditSubscriptionModalProps) => {
   const isEditing = !!subscriptionToEdit;
   
@@ -163,12 +165,12 @@ const AddEditSubscriptionModal = ({ isOpen, onClose, onSuccess, subscriptionToEd
     };
     try {
       if (isEditing) {
-        await axios.put(`http://localhost:8000/api/subscriptions/${subscriptionToEdit.id}/`, payload, {
+        await axios.put(`${API_URL}/subscriptions/${subscriptionToEdit.id}/`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
         toast.success("Subscription updated successfully!");
       } else {
-        await axios.post('http://localhost:8000/api/subscriptions/', payload, {
+        await axios.post(`${API_URL}/subscriptions/`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
         toast.success("Subscription added successfully!");

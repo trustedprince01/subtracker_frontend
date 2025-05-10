@@ -15,6 +15,8 @@ interface Notification {
   isRead: boolean;
 }
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const Notifications = () => {
   const [filter, setFilter] = useState('all'); // 'all', 'unread', 'read'
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -29,10 +31,10 @@ const Notifications = () => {
 
       try {
         const [subscriptionsResponse, activitiesResponse] = await Promise.all([
-          axios.get('http://localhost:8000/api/subscriptions/', {
+          axios.get(`${API_URL}/subscriptions/`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
-          axios.get('http://localhost:8000/api/user/activities/', {
+          axios.get(`${API_URL}/user/activities/`, {
             headers: { Authorization: `Bearer ${token}` }
           })
         ]);

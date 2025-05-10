@@ -9,6 +9,8 @@ interface NotificationsListProps {
   notifications?: NotificationProps[];
 }
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const NotificationsList = ({ filter, notifications: initialNotifications }: NotificationsListProps) => {
   const [localNotifications, setLocalNotifications] = useState<NotificationProps[]>(initialNotifications || []);
   const [isLoading, setIsLoading] = useState(!initialNotifications);
@@ -19,7 +21,7 @@ const NotificationsList = ({ filter, notifications: initialNotifications }: Noti
       let token = localStorage.getItem('access_token');
 
       try {
-        const response = await axios.get('http://localhost:8000/api/user/activities/', {
+        const response = await axios.get(`${API_URL}/user/activities/`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -50,7 +52,7 @@ const NotificationsList = ({ filter, notifications: initialNotifications }: Noti
 
           // Retry fetching activities with new token
           token = refreshResponse.data.access;
-          const retryResponse = await axios.get('http://localhost:8000/api/user/activities/', {
+          const retryResponse = await axios.get(`${API_URL}/user/activities/`, {
             headers: { Authorization: `Bearer ${token}` }
           });
 

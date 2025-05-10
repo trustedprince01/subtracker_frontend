@@ -21,6 +21,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -31,7 +33,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     const fetchUserProfile = async () => {
       try {
         const token = localStorage.getItem('token') || localStorage.getItem('access_token') || localStorage.getItem('accessToken') || localStorage.getItem('jwt');
-        const response = await axios.get('http://localhost:8000/api/user/profile/me/', {
+        const response = await axios.get(`${API_URL}/user/profile/me/`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (response.data.username) {

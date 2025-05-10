@@ -5,10 +5,14 @@ import { Button } from '@/components/ui/button';
 import { EditIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import axios from 'axios';
+import.meta.env.VITE_API_URL;
+
+// Replace all axios and api baseURL instances from 'http://localhost:8000/api' to import.meta.env.VITE_API_URL
+const API_URL = import.meta.env.VITE_API_URL;
 
 // Create an axios instance with interceptors
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
@@ -43,7 +47,7 @@ api.interceptors.response.use(
 
       try {
         const refreshToken = localStorage.getItem('refresh_token');
-        const response = await axios.post('http://localhost:8000/api/token/refresh/', {
+        const response = await axios.post(`${API_URL}/token/refresh/`, {
           refresh: refreshToken
         });
 
@@ -203,7 +207,7 @@ const ProfileHeader = () => {
       }
 
       const token = localStorage.getItem('access_token');
-      const response = await axios.patch('http://localhost:8000/api/user/profile/me/', {
+      const response = await axios.patch(`${API_URL}/user/profile/me/`, {
         first_name: editData.firstName.trim(),
         last_name: editData.lastName.trim(),
         username: editData.username.trim()

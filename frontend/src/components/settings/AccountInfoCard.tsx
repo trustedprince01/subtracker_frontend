@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Shield, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const AccountInfoCard = () => {
   const [accountInfo, setAccountInfo] = useState({
@@ -25,7 +26,7 @@ const AccountInfoCard = () => {
       try {
         setIsLoading(true);
         const token = localStorage.getItem('access_token');
-        const response = await axios.get('http://localhost:8000/api/user/profile/me/', {
+        const response = await axios.get(`${API_URL}/user/profile/me/`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -47,7 +48,7 @@ const AccountInfoCard = () => {
         if (error.response?.status === 401) {
           try {
             const refreshToken = localStorage.getItem('refresh_token');
-            const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
+            const refreshResponse = await axios.post(`${API_URL}/token/refresh/`, {
               refresh: refreshToken
             });
             

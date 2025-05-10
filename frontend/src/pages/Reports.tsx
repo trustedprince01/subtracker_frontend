@@ -9,6 +9,8 @@ import UpcomingRenewals from '@/components/reports/UpcomingRenewals';
 import { Toaster } from 'sonner';
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const Reports = () => {
   const [timePeriod, setTimePeriod] = useState('This Month');
   const [subscriptions, setSubscriptions] = useState([]);
@@ -16,7 +18,7 @@ const Reports = () => {
   const fetchSubscriptions = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const response = await axios.get('http://localhost:8000/api/subscriptions/', {
+      const response = await axios.get(`${API_URL}/subscriptions/`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       // Map backend fields to frontend fields

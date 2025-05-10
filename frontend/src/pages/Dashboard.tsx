@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const Dashboard = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [subscriptions, setSubscriptions] = useState([]);
@@ -24,7 +26,7 @@ const Dashboard = () => {
   const fetchUserActivities = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const response = await axios.get('http://localhost:8000/api/user/activities/', {
+      const response = await axios.get(`${API_URL}/user/activities/`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -68,7 +70,7 @@ const Dashboard = () => {
   const fetchSubscriptions = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const response = await axios.get('http://localhost:8000/api/subscriptions/', {
+      const response = await axios.get(`${API_URL}/subscriptions/`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       // Map backend fields to frontend fields
@@ -84,7 +86,7 @@ const Dashboard = () => {
       if (error.response?.status === 401) {
         try {
           const refreshToken = localStorage.getItem('refresh_token');
-          const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
+          const refreshResponse = await axios.post(`${API_URL}/token/refresh/`, {
             refresh: refreshToken
           });
           
@@ -126,7 +128,7 @@ const Dashboard = () => {
     if (!subscription) return;
     const token = localStorage.getItem('access_token');
     try {
-      await axios.delete(`http://localhost:8000/api/subscriptions/${subscription.id}/`, {
+      await axios.delete(`${API_URL}/subscriptions/${subscription.id}/`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setDeleteDialog({ open: false, subscription: null });
@@ -147,7 +149,7 @@ const Dashboard = () => {
       if (error.response?.status === 401) {
         try {
           const refreshToken = localStorage.getItem('refresh_token');
-          const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
+          const refreshResponse = await axios.post(`${API_URL}/token/refresh/`, {
             refresh: refreshToken
           });
           
