@@ -251,22 +251,101 @@ const AuthForm = ({ type }: AuthFormProps) => {
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-200">Email</Label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
-                  <Mail size={18} />
+            {/* Email and Username side by side for signup, only Email for login */}
+            {isLogin ? (
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-gray-200">Email</Label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
+                    <Mail size={18} />
+                  </div>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="bg-darkBlue-800 bg-opacity-50 border-purple-900 border-opacity-30 pl-10 focus-visible:ring-purple-400 focus-visible:border-purple-400 text-gray-100"
+                  />
                 </div>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="bg-darkBlue-800 bg-opacity-50 border-purple-900 border-opacity-30 pl-10 focus-visible:ring-purple-400 focus-visible:border-purple-400 text-gray-100"
-                />
               </div>
-            </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-gray-200">Email</Label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
+                      <Mail size={18} />
+                    </div>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="your@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="bg-darkBlue-800 bg-opacity-50 border-purple-900 border-opacity-30 pl-10 focus-visible:ring-purple-400 focus-visible:border-purple-400 text-gray-100"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="username" className="text-gray-200">Username</Label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
+                      <User size={18} /> 
+                    </div>
+                    <Input
+                      id="username"
+                      type="text"
+                      placeholder="Username"
+                      value={username}
+                      onChange={e => setUsername(e.target.value)}
+                      className="bg-darkBlue-800 bg-opacity-50 border-purple-900 border-opacity-30 pl-10 focus-visible:ring-purple-400 focus-visible:border-purple-400 text-gray-100"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* First Name and Last Name side by side for signup only */}
+            {!isLogin && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName" className="text-gray-200">First Name</Label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
+                      <User size={18} />
+                    </div>
+                    <Input
+                      id="firstName"
+                      type="text"
+                      placeholder="First Name"
+                      value={firstName}
+                      onChange={e => setFirstName(e.target.value)}
+                      className="bg-darkBlue-800 bg-opacity-50 border-purple-900 border-opacity-30 pl-10 focus-visible:ring-purple-400 focus-visible:border-purple-400 text-gray-100"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName" className="text-gray-200">Last Name</Label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
+                      <User size={18} />
+                    </div>
+                    <Input
+                      id="lastName"
+                      type="text"
+                      placeholder="Last Name"
+                      value={lastName}
+                      onChange={e => setLastName(e.target.value)}
+                      className="bg-darkBlue-800 bg-opacity-50 border-purple-900 border-opacity-30 pl-10 focus-visible:ring-purple-400 focus-visible:border-purple-400 text-gray-100"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="password" className="text-gray-200">Password</Label>
@@ -338,62 +417,6 @@ const AuthForm = ({ type }: AuthFormProps) => {
                   <p className="text-xs text-red-400 mt-1">Passwords do not match</p>
                 )}
               </div>
-            )}
-
-            {!isLogin && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="firstName" className="text-gray-200">First Name</Label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
-                      <User size={18} />
-                    </div>
-                    <Input
-                      id="firstName"
-                      type="text"
-                      placeholder="First Name"
-                      value={firstName}
-                      onChange={e => setFirstName(e.target.value)}
-                      className="bg-darkBlue-800 bg-opacity-50 border-purple-900 border-opacity-30 pl-10 focus-visible:ring-purple-400 focus-visible:border-purple-400 text-gray-100"
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName" className="text-gray-200">Last Name</Label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
-                      <User size={18} />
-                    </div>
-                    <Input
-                      id="lastName"
-                      type="text"
-                      placeholder="Last Name"
-                      value={lastName}
-                      onChange={e => setLastName(e.target.value)}
-                      className="bg-darkBlue-800 bg-opacity-50 border-purple-900 border-opacity-30 pl-10 focus-visible:ring-purple-400 focus-visible:border-purple-400 text-gray-100"
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="username" className="text-gray-200">Username</Label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
-                      <User size={18} />
-                    </div>
-                    <Input
-                      id="username"
-                      type="text"
-                      placeholder="Username"
-                      value={username}
-                      onChange={e => setUsername(e.target.value)}
-                      className="bg-darkBlue-800 bg-opacity-50 border-purple-900 border-opacity-30 pl-10 focus-visible:ring-purple-400 focus-visible:border-purple-400 text-gray-100"
-                      required
-                    />
-                  </div>
-                </div>
-              </>
             )}
 
             {isLogin && (
