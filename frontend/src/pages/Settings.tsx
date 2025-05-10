@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import ProfileHeader from '@/components/settings/ProfileHeader';
 import AccountInfoCard from '@/components/settings/AccountInfoCard';
@@ -12,7 +13,25 @@ import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 
 const Settings = () => {
+  const [subscriptions, setSubscriptions] = useState([]);
   const navigate = useNavigate();
+  
+  useEffect(() => {
+    const fetchSubscriptions = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get('/api/subscriptions/', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setSubscriptions(response.data);
+      } catch (error) {
+        console.error('Failed to fetch subscriptions', error);
+        toast.error('Could not load subscriptions');
+      }
+    };
+
+    fetchSubscriptions();
+  }, []);
   
   const handleLogout = () => {
     toast.success('Successfully logged out');
@@ -39,14 +58,11 @@ const Settings = () => {
         
         <ProfileHeader />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-4">
             <AccountInfoCard />
           </div>
-          <div className="lg:col-span-1">
-            <StatisticsCards />
-          </div>
         </div>
-        <ActivityTimeline />
+        {/* <ActivityTimeline /> */}
         <QuickActions />
       </div>
     </DashboardLayout>

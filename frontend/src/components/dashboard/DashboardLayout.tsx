@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   SidebarProvider, 
   Sidebar,
@@ -20,11 +19,37 @@ import {
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import axios from 'axios';
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  
+  const [username, setUsername] = useState('');
+  const [userAvatar, setUserAvatar] = useState('/default-avatar.png');
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const token = localStorage.getItem('token') || localStorage.getItem('access_token') || localStorage.getItem('accessToken') || localStorage.getItem('jwt');
+        const response = await axios.get('http://localhost:8000/api/user/profile/me/', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (response.data.username) {
+          setUsername(response.data.username);
+        } else if (response.data.email) {
+          setUsername(response.data.email.split('@')[0]);
+        }
+        if (response.data.avatar) {
+          setUserAvatar(response.data.avatar);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user profile', error);
+        setUsername('User');
+      }
+    };
+    fetchUserProfile();
+  }, []);
+
   const handleLogout = () => {
     toast.success('Successfully logged out');
     // In a real app, you would clear auth tokens/session here
@@ -92,11 +117,13 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             <div className="px-3 py-2">
               <div className="flex items-center justify-between">
                 <Link to="/settings" className="flex items-center gap-3 p-2 rounded-md hover:bg-purple-900/20 transition-colors">
-                  <div className="w-8 h-8 rounded-full bg-purple-800/50 flex items-center justify-center">
-                    <User size={16} className="text-purple-300" />
-                  </div>
+                  <img 
+                    src={userAvatar} 
+                    alt="Profile" 
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
                   <div className="flex flex-col">
-                    <span className="text-sm font-medium text-gray-100">Alex Johnson</span>
+                    <span className="text-sm font-medium text-gray-100">{username || 'User'}</span>
                     <span className="text-xs text-gray-400">Premium Plan</span>
                   </div>
                 </Link>

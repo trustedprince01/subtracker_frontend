@@ -6,18 +6,19 @@ import { getAccessToken } from '@/lib/auth';
 
 interface NotificationsListProps {
   filter: string;
-  notifications: NotificationProps[];
+  notifications?: NotificationProps[];
 }
 
-const NotificationsList = ({ filter }: { filter: string }) => {
-  const [localNotifications, setLocalNotifications] = useState<NotificationProps[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+const NotificationsList = ({ filter, notifications: initialNotifications }: NotificationsListProps) => {
+  const [localNotifications, setLocalNotifications] = useState<NotificationProps[]>(initialNotifications || []);
+  const [isLoading, setIsLoading] = useState(!initialNotifications);
 
-  useEffect(() => {
-    const fetchUserActivities = async () => {
+  const fetchUserActivities = async () => {
+    try {
+      setIsLoading(true);
+      let token = localStorage.getItem('access_token');
+
       try {
-        setIsLoading(true);
-        const token = getAccessToken();
         const response = await axios.get('http://localhost:8000/api/user/activities/', {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -33,14 +34,50 @@ const NotificationsList = ({ filter }: { filter: string }) => {
         }));
 
         setLocalNotifications(activities);
-      } catch (error) {
-        console.error('Failed to fetch user activities', error);
-        toast.error('Could not load notifications');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      } catch (error: any) {
+        // If token is invalid, try to refresh
+        if (error.response?.status === 401) {
+          const refreshToken = localStorage.getItem('refresh_token');
+          const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
+            refresh: refreshToken
+          });
 
+          // Update tokens
+          localStorage.setItem('access_token', refreshResponse.data.access);
+          if (refreshResponse.data.refresh) {
+            localStorage.setItem('refresh_token', refreshResponse.data.refresh);
+          }
+
+          // Retry fetching activities with new token
+          token = refreshResponse.data.access;
+          const retryResponse = await axios.get('http://localhost:8000/api/user/activities/', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+
+          const activities = retryResponse.data.map(activity => ({
+            id: activity.id.toString(),
+            type: getNotificationType(activity.type),
+            title: getNotificationTitle(activity.type),
+            message: activity.description,
+            timestamp: new Date(activity.timestamp),
+            isRead: false,
+            onMarkAsRead: () => {}
+          }));
+
+          setLocalNotifications(activities);
+        } else {
+          throw error;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch user activities', error);
+      toast.error('Could not load notifications');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchUserActivities();
   }, []);
 

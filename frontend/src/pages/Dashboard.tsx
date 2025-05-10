@@ -21,6 +21,50 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
 
+  const fetchUserActivities = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await axios.get('http://localhost:8000/api/user/activities/', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const activities = response.data.map(activity => ({
+        id: activity.id.toString(),
+        type: getNotificationType(activity.type),
+        title: getNotificationTitle(activity.type),
+        message: activity.description,
+        timestamp: new Date(activity.timestamp),
+        isRead: false
+      }));
+
+      setNotifications(activities);
+    } catch (error) {
+      console.error('Failed to fetch user activities', error);
+    }
+  };
+
+  const getNotificationType = (activityType: string) => {
+    const typeMap = {
+      'subscription_added': 'feature',
+      'subscription_removed': 'account',
+      'profile_updated': 'tip',
+      'login': 'payment',
+      'password_changed': 'account'
+    };
+    return typeMap[activityType] || 'tip';
+  };
+
+  const getNotificationTitle = (activityType: string) => {
+    const titleMap = {
+      'subscription_added': 'New Subscription',
+      'subscription_removed': 'Subscription Removed',
+      'profile_updated': 'Profile Updated',
+      'login': 'New Login',
+      'password_changed': 'Security Update'
+    };
+    return titleMap[activityType] || 'Activity Notification';
+  };
+
   const fetchSubscriptions = async () => {
     try {
       const token = localStorage.getItem('access_token');
@@ -63,7 +107,10 @@ const Dashboard = () => {
     }
   };
 
-  React.useEffect(() => { fetchSubscriptions(); }, []);
+  React.useEffect(() => { 
+    fetchSubscriptions(); 
+    fetchUserActivities(); 
+  }, []);
 
   const handleEdit = (subscription) => {
     setSubscriptionToEdit(subscription);

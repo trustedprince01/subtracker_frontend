@@ -111,7 +111,7 @@ const ProfileHeader = () => {
           title: response.data.title,
           memberSince: response.data.date_joined || '',
           avatarUrl: response.data.avatar || localAvatar || '',
-          isPremium: true // You can update this if you have a real premium field
+          isPremium: true 
         });
       } catch (error) {
         console.error('Failed to fetch user:', error);
