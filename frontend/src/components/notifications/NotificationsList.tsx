@@ -18,14 +18,25 @@ const NotificationsList = ({ filter, notifications: initialNotifications }: Noti
   const fetchUserActivities = async () => {
     try {
       setIsLoading(true);
-      let token = localStorage.getItem('access_token');
+      const token = localStorage.getItem('access_token');
+      
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
 
       try {
-        const response = await axios.get(`${API_URL}/user/activities/`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await axios.get(
+          `${API_URL}/api/user/activities/`,
+          { headers }
+        );
 
-        const activities = response.data.map(activity => ({
+        const activities = response.data.map((activity: any) => ({
           id: activity.id.toString(),
           type: getNotificationType(activity.type),
           title: getNotificationTitle(activity.type),
@@ -37,36 +48,55 @@ const NotificationsList = ({ filter, notifications: initialNotifications }: Noti
 
         setLocalNotifications(activities);
       } catch (error: any) {
+        console.error('Error fetching activities:', error);
+        
         // If token is invalid, try to refresh
         if (error.response?.status === 401) {
-          const refreshToken = localStorage.getItem('refresh_token');
-          const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
-            refresh: refreshToken
-          });
+          try {
+            const refreshToken = localStorage.getItem('refresh_token');
+            if (!refreshToken) throw new Error('No refresh token');
+            
+            const refreshResponse = await axios.post(
+              `${API_URL}/api/token/refresh/`,
+              { refresh: refreshToken },
+              { headers: { 'Content-Type': 'application/json' } }
+            );
 
-          // Update tokens
-          localStorage.setItem('access_token', refreshResponse.data.access);
-          if (refreshResponse.data.refresh) {
-            localStorage.setItem('refresh_token', refreshResponse.data.refresh);
+            // Update tokens
+            localStorage.setItem('access_token', refreshResponse.data.access);
+            if (refreshResponse.data.refresh) {
+              localStorage.setItem('refresh_token', refreshResponse.data.refresh);
+            }
+
+            // Retry fetching activities with new token
+            const newToken = refreshResponse.data.access;
+            const retryResponse = await axios.get(
+              `${API_URL}/api/user/activities/`,
+              { 
+                headers: { 
+                  'Authorization': `Bearer ${newToken}`,
+                  'Content-Type': 'application/json'
+                } 
+              }
+            );
+
+            const activities = retryResponse.data.map((activity: any) => ({
+              id: activity.id.toString(),
+              type: getNotificationType(activity.type),
+              title: getNotificationTitle(activity.type),
+              message: activity.description,
+              timestamp: new Date(activity.timestamp),
+              isRead: false,
+              onMarkAsRead: () => {}
+            }));
+
+            setLocalNotifications(activities);
+          } catch (refreshError) {
+            console.error('Failed to refresh token:', refreshError);
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            window.location.href = '/login';
           }
-
-          // Retry fetching activities with new token
-          token = refreshResponse.data.access;
-          const retryResponse = await axios.get(`${API_URL}/user/activities/`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-
-          const activities = retryResponse.data.map(activity => ({
-            id: activity.id.toString(),
-            type: getNotificationType(activity.type),
-            title: getNotificationTitle(activity.type),
-            message: activity.description,
-            timestamp: new Date(activity.timestamp),
-            isRead: false,
-            onMarkAsRead: () => {}
-          }));
-
-          setLocalNotifications(activities);
         } else {
           throw error;
         }

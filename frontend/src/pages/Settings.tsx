@@ -18,26 +18,59 @@ const Settings = () => {
   const [subscriptions, setSubscriptions] = useState([]);
   const navigate = useNavigate();
   
-  useEffect(() => {
-    const fetchSubscriptions = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`${API_URL}/subscriptions/`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setSubscriptions(response.data);
-      } catch (error) {
-        console.error('Failed to fetch subscriptions', error);
-        toast.error('Could not load subscriptions');
+  const fetchSubscriptions = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        window.location.href = '/login';
+        return;
       }
-    };
+      const response = await axios.get(`${API_URL}/api/subscriptions/`, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      setSubscriptions(response.data);
+    } catch (error: any) {
+      console.error('Failed to fetch subscriptions', error);
+      toast.error('Could not load subscriptions');
+      
+      // Handle token refresh if needed
+      if (error.response?.status === 401) {
+        try {
+          const refreshToken = localStorage.getItem('refresh_token');
+          if (refreshToken) {
+            const refreshResponse = await axios.post(`${API_URL}/api/token/refresh/`, {
+              refresh: refreshToken
+            });
+            
+            localStorage.setItem('access_token', refreshResponse.data.access);
+            if (refreshResponse.data.refresh) {
+              localStorage.setItem('refresh_token', refreshResponse.data.refresh);
+            }
+            
+            // Retry fetching subscriptions
+            return fetchSubscriptions();
+          }
+        } catch (refreshError) {
+          // If refresh fails, redirect to login
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          window.location.href = '/login';
+        }
+      }
+    }
+  };
 
+  useEffect(() => {
     fetchSubscriptions();
   }, []);
   
   const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
     toast.success('Successfully logged out');
-    // In a real app, you would clear auth tokens/session here
     setTimeout(() => {
       navigate('/login');
     }, 1500);

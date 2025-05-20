@@ -153,6 +153,11 @@ const AddEditSubscriptionModal = ({ isOpen, onClose, onSuccess, subscriptionToEd
 
   const onSubmit = async (data: FormValues) => {
     const token = localStorage.getItem('access_token');
+    if (!token) {
+      window.location.href = '/login';
+      return;
+    }
+    
     // Use selected logo filename or default
     const logoFilename = logo || 'default.png';
     const payload = {
@@ -163,31 +168,45 @@ const AddEditSubscriptionModal = ({ isOpen, onClose, onSuccess, subscriptionToEd
       category: data.category,
       logo: logoFilename,
     };
+    
     try {
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+      
       if (isEditing) {
-        await axios.put(`${API_URL}/subscriptions/${subscriptionToEdit.id}/`, payload, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.put(
+          `${API_URL}/api/subscriptions/${subscriptionToEdit.id}/`,
+          payload,
+          { headers }
+        );
         toast.success("Subscription updated successfully!");
       } else {
-        await axios.post(`${API_URL}/subscriptions/`, payload, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.post(
+          `${API_URL}/api/subscriptions/`,
+          payload,
+          { headers }
+        );
         toast.success("Subscription added successfully!");
       }
       onSuccess();
       onClose();
     } catch (error: any) {
-      console.error('Subscription add/edit error:', error.response?.data);
+      console.error('Subscription add/edit error:', error.response?.data || error.message);
       
       // Check if token is invalid or expired
       if (error.response?.status === 401) {
         try {
           // Attempt to refresh token
           const refreshToken = localStorage.getItem('refresh_token');
-          const response = await axios.post('http://localhost:8000/api/token/refresh/', {
-            refresh: refreshToken
-          });
+          if (!refreshToken) throw new Error('No refresh token');
+          
+          const response = await axios.post(
+            `${API_URL}/api/token/refresh/`,
+            { refresh: refreshToken },
+            { headers: { 'Content-Type': 'application/json' } }
+          );
           
           // Update tokens
           localStorage.setItem('access_token', response.data.access);

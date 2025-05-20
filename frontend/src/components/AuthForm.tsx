@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Eye, EyeOff, User, Mail, Shield } from 'lucide-react';
-import { supabase } from '../lib/supabase';
-import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { setAccessToken, setRefreshToken } from '@/lib/auth';
 
 interface AuthFormProps {
   type: 'login' | 'signup';
@@ -16,32 +16,112 @@ interface AuthFormProps {
 const API_URL = import.meta.env.VITE_API_URL;
 
 const handleSignup = async (email: string, password: string, userData: any) => {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        first_name: userData.firstName,
-        last_name: userData.lastName,
-        username: userData.username
-      },
-      emailRedirectTo: `${window.location.origin}/dashboard`
+  try {
+    const response = await axios.post(`${API_URL}/api/register/`, {
+      email,
+      password,
+      first_name: userData.firstName,
+      last_name: userData.lastName,
+      username: userData.username
+    });
+    
+    // Return success without logging in
+    return { 
+      data: { success: true }, 
+      error: null 
+    };
+  } catch (error: any) {
+    console.error('Signup error:', error);
+    let errorMessage = 'Signup failed. Please try again.';
+    
+    // Handle specific error cases
+    if (error.response?.data) {
+      const errorData = error.response.data;
+      
+      // Handle field-specific errors
+      if (errorData.email) {
+        errorMessage = Array.isArray(errorData.email) 
+          ? errorData.email[0] 
+          : 'This email is already in use. Please use a different email.';
+      } else if (errorData.username) {
+        errorMessage = Array.isArray(errorData.username)
+          ? errorData.username[0]
+          : 'This username is already taken. Please choose a different one.';
+      } else if (errorData.non_field_errors) {
+        errorMessage = Array.isArray(errorData.non_field_errors)
+          ? errorData.non_field_errors[0]
+          : 'Signup failed. Please check your information and try again.';
+      } else if (typeof errorData === 'string') {
+        errorMessage = errorData;
+      }
     }
-  });
-  
-  return { data, error };
+    
+    return { 
+      data: null, 
+      error: { message: errorMessage }
+    };
+  }
 };
 
 const handleLogin = async (email: string, password: string) => {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-  
-  return { data, error };
+  try {
+    // Note: The backend expects 'username' but we'll send email as the username
+    const response = await axios.post(`${API_URL}/api/login/`, {
+      username: email,  // Using email as username
+      password,
+    });
+    
+    if (!response.data.access) {
+      throw new Error('No access token received');
+    }
+    
+    // Get user profile first
+    const userResponse = await axios.get(`${API_URL}/api/user/profile/`, {
+      headers: {
+        'Authorization': `Bearer ${response.data.access}`
+      }
+    });
+
+    return { 
+      data: { 
+        user: userResponse.data,
+        session: { 
+          access_token: response.data.access,
+          refresh_token: response.data.refresh 
+        }
+      }, 
+      error: null 
+    };
+  } catch (error: any) {
+    console.error('Login error:', error);
+    
+    // Handle specific error cases
+    let errorMessage = 'Login failed. Please check your credentials.';
+    
+    if (error.response?.data) {
+      const errorData = error.response.data;
+      
+      if (errorData.detail) {
+        errorMessage = errorData.detail;
+      } else if (errorData.non_field_errors) {
+        errorMessage = Array.isArray(errorData.non_field_errors)
+          ? errorData.non_field_errors[0]
+          : 'Invalid credentials';
+      } else if (typeof errorData === 'string') {
+        errorMessage = errorData;
+      }
+    }
+    
+    return { 
+      data: null, 
+      error: { message: errorMessage }
+    };
+  }
 };
 
 const AuthForm = ({ type }: AuthFormProps) => {
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -51,7 +131,6 @@ const AuthForm = ({ type }: AuthFormProps) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
-  const { toast } = useToast();
   
   const isLogin = type === 'login';
   const title = isLogin ? 'Welcome Back' : 'Create Your Account';
@@ -169,28 +248,26 @@ const AuthForm = ({ type }: AuthFormProps) => {
           throw error;
         }
         
-        if (data?.user?.identities?.length === 0) {
-          throw new Error('User already registered');
+        if (data?.success) {
+          toast({
+            title: "Account created!",
+            description: "Please log in with your credentials.",
+          });
+          
+          // Redirect to login page after successful signup
+          window.location.href = '/login';
+        } else {
+          throw new Error('Registration failed');
         }
-        
-        toast({
-          title: "Check your email!",
-          description: "We've sent you a confirmation email. Please verify your email to continue.",
-        });
-        
-        // Redirect to login page after successful signup
-        window.location.href = '/login?email=' + encodeURIComponent(email);
       } catch (error: any) {
         console.error('Signup error details:', error);
         let errorMessage = 'Failed to create account. Please try again.';
         
-        if (error.message === 'User already registered') {
-          errorMessage = 'This email is already registered. Please log in instead.';
-        } else if (error.message.includes('already in use')) {
-          errorMessage = 'This email is already registered. Please log in instead.';
-        } else if (error.error_description) {
-          errorMessage = error.error_description;
+        // Use the error message from the API if available
+        if (error?.response?.data?.message) {
+          errorMessage = error.response.data.message;
         } else if (error.message) {
+          // Something happened in setting up the request
           errorMessage = error.message;
         }
         
@@ -202,7 +279,7 @@ const AuthForm = ({ type }: AuthFormProps) => {
       }
     } else {
       try {
-        // Call the Supabase login
+        // Call the login function
         const { data, error } = await handleLogin(email, password);
         
         if (error) {
@@ -210,17 +287,24 @@ const AuthForm = ({ type }: AuthFormProps) => {
           throw error;
         }
         
-        if (!data?.session) {
-          throw new Error('No session returned from login');
+        if (data?.user) {
+          // Store the tokens
+          setAccessToken(data.session.access_token);
+          if (data.session.refresh_token) {
+            setRefreshToken(data.session.refresh_token);
+          }
+          
+          // Show success message
+          toast({
+            title: "Welcome back!",
+            description: `Logged in as ${data.user.email || email}`,
+          });
+          
+          // Redirect to dashboard after successful login
+          navigate('/dashboard');
+        } else {
+          throw new Error('No user data received');
         }
-        
-        toast({
-          title: "Login Successful",
-          description: "Welcome back to SubTrackr!",
-        });
-        
-        // Redirect to dashboard after successful login
-        window.location.href = '/dashboard';
       } catch (error) {
         toast({
           title: "Error",
@@ -510,3 +594,7 @@ const AuthForm = ({ type }: AuthFormProps) => {
 };
 
 export default AuthForm;
+function setUser(user: any) {
+  throw new Error('Function not implemented.');
+}
+

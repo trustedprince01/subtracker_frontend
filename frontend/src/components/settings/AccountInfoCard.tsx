@@ -26,8 +26,11 @@ const AccountInfoCard = () => {
       try {
         setIsLoading(true);
         const token = localStorage.getItem('access_token');
-        const response = await axios.get(`${API_URL}/user/profile/me/`, {
-          headers: { Authorization: `Bearer ${token}` }
+        const response = await axios.get(`${API_URL}/api/user/profile/`, {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         });
 
         const userData = response.data;
@@ -48,7 +51,7 @@ const AccountInfoCard = () => {
         if (error.response?.status === 401) {
           try {
             const refreshToken = localStorage.getItem('refresh_token');
-            const refreshResponse = await axios.post(`${API_URL}/token/refresh/`, {
+            const refreshResponse = await axios.post(`${API_URL}/api/token/refresh/`, {
               refresh: refreshToken
             });
             

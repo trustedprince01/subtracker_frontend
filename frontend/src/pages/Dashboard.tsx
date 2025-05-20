@@ -26,8 +26,15 @@ const Dashboard = () => {
   const fetchUserActivities = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const response = await axios.get(`${API_URL}/user/activities/`, {
-        headers: { Authorization: `Bearer ${token}` }
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+      const response = await axios.get(`${API_URL}/api/user/activities/`, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       const activities = response.data.map(activity => ({
@@ -70,8 +77,15 @@ const Dashboard = () => {
   const fetchSubscriptions = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const response = await axios.get(`${API_URL}/subscriptions/`, {
-        headers: { Authorization: `Bearer ${token}` }
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+      const response = await axios.get(`${API_URL}/api/subscriptions/`, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
       // Map backend fields to frontend fields
       const mapped = response.data.map((sub: any) => ({
@@ -86,7 +100,7 @@ const Dashboard = () => {
       if (error.response?.status === 401) {
         try {
           const refreshToken = localStorage.getItem('refresh_token');
-          const refreshResponse = await axios.post(`${API_URL}/token/refresh/`, {
+          const refreshResponse = await axios.post(`${API_URL}/api/token/refresh/`, {
             refresh: refreshToken
           });
           
@@ -128,8 +142,11 @@ const Dashboard = () => {
     if (!subscription) return;
     const token = localStorage.getItem('access_token');
     try {
-      await axios.delete(`${API_URL}/subscriptions/${subscription.id}/`, {
-        headers: { Authorization: `Bearer ${token}` }
+      await axios.delete(`${API_URL}/api/subscriptions/${subscription.id}/`, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
       setDeleteDialog({ open: false, subscription: null });
       setNotifications(prev => [
@@ -149,7 +166,11 @@ const Dashboard = () => {
       if (error.response?.status === 401) {
         try {
           const refreshToken = localStorage.getItem('refresh_token');
-          const refreshResponse = await axios.post(`${API_URL}/token/refresh/`, {
+          if (!refreshToken) {
+            window.location.href = '/login';
+            return;
+          }
+          const refreshResponse = await axios.post(`${API_URL}/api/token/refresh/`, {
             refresh: refreshToken
           });
           

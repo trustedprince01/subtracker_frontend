@@ -32,10 +32,20 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const token = localStorage.getItem('token') || localStorage.getItem('access_token') || localStorage.getItem('accessToken') || localStorage.getItem('jwt');
-        const response = await axios.get(`${API_URL}/user/profile/me/`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+          navigate('/login');
+          return;
+        }
+        
+        const authHeader = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        };
+
+        const response = await axios.get(`${API_URL}/api/user/profile/`, authHeader);
         if (response.data.username) {
           setUsername(response.data.username);
         } else if (response.data.email) {

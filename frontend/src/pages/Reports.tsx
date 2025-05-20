@@ -6,7 +6,7 @@ import ChartSection from '@/components/reports/ChartSection';
 import CategoryBreakdown from '@/components/reports/CategoryBreakdown';
 import InsightsPanel from '@/components/reports/InsightsPanel';
 import UpcomingRenewals from '@/components/reports/UpcomingRenewals';
-import { Toaster } from 'sonner';
+import { toast, Toaster } from 'sonner';
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -18,9 +18,18 @@ const Reports = () => {
   const fetchSubscriptions = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const response = await axios.get(`${API_URL}/subscriptions/`, {
-        headers: { Authorization: `Bearer ${token}` }
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+      
+      const response = await axios.get(`${API_URL}/api/subscriptions/`, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
+      
       // Map backend fields to frontend fields
       const mapped = response.data.map((sub: any) => ({
         ...sub,
@@ -29,11 +38,17 @@ const Reports = () => {
       }));
       setSubscriptions(mapped);
     } catch (error: any) {
+      console.error('Error fetching subscriptions:', error);
+      
       // Check if token is invalid
       if (error.response?.status === 401) {
         try {
           const refreshToken = localStorage.getItem('refresh_token');
-          const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
+          if (!refreshToken) {
+            throw new Error('No refresh token');
+          }
+          
+          const refreshResponse = await axios.post(`${API_URL}/api/token/refresh/`, {
             refresh: refreshToken
           });
           
@@ -46,11 +61,15 @@ const Reports = () => {
           // Retry fetching subscriptions
           return fetchSubscriptions();
         } catch (refreshError) {
+          console.error('Token refresh failed:', refreshError);
           // If refresh fails, redirect to login
           localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');
           window.location.href = '/login';
         }
+      } else {
+        // For other errors, show a user-friendly message
+        toast.error('Failed to load subscription data');
       }
       setSubscriptions([]);
     }

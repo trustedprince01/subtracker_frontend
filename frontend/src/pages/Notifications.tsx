@@ -26,17 +26,19 @@ const Notifications = () => {
     try {
       const token = localStorage.getItem('access_token');
       if (!token) {
-        throw new Error('No access token found');
+        window.location.href = '/login';
+        return;
       }
+
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
 
       try {
         const [subscriptionsResponse, activitiesResponse] = await Promise.all([
-          axios.get(`${API_URL}/subscriptions/`, {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          axios.get(`${API_URL}/user/activities/`, {
-            headers: { Authorization: `Bearer ${token}` }
-          })
+          axios.get(`${API_URL}/api/subscriptions/`, { headers }),
+          axios.get(`${API_URL}/api/user/activities/`, { headers })
         ]);
 
         // Map subscriptions
@@ -97,9 +99,11 @@ const Notifications = () => {
           const refreshToken = localStorage.getItem('refresh_token');
           if (refreshToken) {
             try {
-              const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
-                refresh: refreshToken
-              });
+              const refreshResponse = await axios.post(
+                `${API_URL}/api/token/refresh/`,
+                { refresh: refreshToken },
+                { headers: { 'Content-Type': 'application/json' } }
+              );
 
               // Update tokens
               localStorage.setItem('access_token', refreshResponse.data.access);

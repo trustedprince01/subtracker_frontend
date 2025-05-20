@@ -32,7 +32,11 @@ const DashboardHeader = ({ username: initialUsername, search, setSearch, notific
     const fetchUserProfile = async () => {
       try {
         const token = localStorage.getItem('access_token');
-        const response = await axios.get(`${API_URL}/user/profile/me/`, {
+        if (!token) {
+          navigate('/login');
+          return;
+        }
+        const response = await axios.get(`${API_URL}/api/user/profile/`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
