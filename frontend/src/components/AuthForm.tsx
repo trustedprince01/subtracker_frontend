@@ -6,8 +6,8 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Eye, EyeOff, User, Mail, Shield } from 'lucide-react';
-import axios from 'axios';
-
+import { supabase } from '../lib/supabase';
+import { useNavigate } from 'react-router-dom';
 
 interface AuthFormProps {
   type: 'login' | 'signup';
@@ -15,39 +15,30 @@ interface AuthFormProps {
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const handleSignup = async (email: string, password: string) => {
-  try {
-    const response = await axios.post(`${API_URL}/register/`, {
-      email: email,
-      password: password
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-const storeAuthToken = (access: string, refresh?: string) => {
-  localStorage.setItem('access_token', access);
-  if (refresh) {
-    localStorage.setItem('refresh_token', refresh);
-  }
+const handleSignup = async (email: string, password: string, userData: any) => {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        first_name: userData.firstName,
+        last_name: userData.lastName,
+        username: userData.username
+      },
+      emailRedirectTo: `${window.location.origin}/dashboard`
+    }
+  });
+  
+  return { data, error };
 };
 
 const handleLogin = async (email: string, password: string) => {
-  try {
-    const response = await axios.post(`${API_URL}/login/`, {
-      username: email,
-      password: password
-    });
-    // Store the token
-    if (response.data.access && response.data.refresh) {
-      storeAuthToken(response.data.access, response.data.refresh);
-    }
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+  
+  return { data, error };
 };
 
 const AuthForm = ({ type }: AuthFormProps) => {
@@ -166,22 +157,22 @@ const AuthForm = ({ type }: AuthFormProps) => {
       }
 
       try {
-        // Call the signup API
-        await axios.post(`${API_URL}/register/`, {
-          username,
-          email,
-          password,
-          first_name: firstName,
-          last_name: lastName,
+        // Call the Supabase signup
+        const { data, error } = await handleSignup(email, password, {
+          firstName,
+          lastName,
+          username
         });
         
+        if (error) throw error;
+        
         toast({
-          title: "Account Created",
-          description: "Your account has been created successfully.",
+          title: "Check your email!",
+          description: "We've sent you a confirmation email. Please verify your email to continue.",
         });
         
         // Redirect to login page after successful signup
-        window.location.href = '/login';
+        window.location.href = '/login?email=' + encodeURIComponent(email);
       } catch (error) {
         toast({
           title: "Error",
@@ -191,8 +182,12 @@ const AuthForm = ({ type }: AuthFormProps) => {
       }
     } else {
       try {
-        // Call the login API
-        await handleLogin(email, password);
+        // Call the Supabase login
+        const { data, error } = await handleLogin(email, password);
+        
+        if (error || !data) {
+          throw error || new Error('No data returned from login');
+        }
         
         toast({
           title: "Login Successful",
