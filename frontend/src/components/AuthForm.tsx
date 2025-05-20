@@ -164,7 +164,14 @@ const AuthForm = ({ type }: AuthFormProps) => {
           username
         });
         
-        if (error) throw error;
+        if (error) {
+          console.error('Signup error:', error);
+          throw error;
+        }
+        
+        if (data?.user?.identities?.length === 0) {
+          throw new Error('User already registered');
+        }
         
         toast({
           title: "Check your email!",
@@ -173,10 +180,23 @@ const AuthForm = ({ type }: AuthFormProps) => {
         
         // Redirect to login page after successful signup
         window.location.href = '/login?email=' + encodeURIComponent(email);
-      } catch (error) {
+      } catch (error: any) {
+        console.error('Signup error details:', error);
+        let errorMessage = 'Failed to create account. Please try again.';
+        
+        if (error.message === 'User already registered') {
+          errorMessage = 'This email is already registered. Please log in instead.';
+        } else if (error.message.includes('already in use')) {
+          errorMessage = 'This email is already registered. Please log in instead.';
+        } else if (error.error_description) {
+          errorMessage = error.error_description;
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
         toast({
           title: "Error",
-          description: "Failed to create account. Please try again.",
+          description: errorMessage,
           variant: "destructive",
         });
       }
@@ -185,8 +205,13 @@ const AuthForm = ({ type }: AuthFormProps) => {
         // Call the Supabase login
         const { data, error } = await handleLogin(email, password);
         
-        if (error || !data) {
-          throw error || new Error('No data returned from login');
+        if (error) {
+          console.error('Login error:', error);
+          throw error;
+        }
+        
+        if (!data?.session) {
+          throw new Error('No session returned from login');
         }
         
         toast({
